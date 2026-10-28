@@ -192,13 +192,13 @@ const I18N_X = {
   sq:{reason:"Pse?",r_time:"Koha kaloi",r_overcooked:"Tepër i pjekur / i thatë",r_dropped:"Ra në tokë",r_other:"Tjetër",advice:"Rekomanduar"}
 };
 const I18N_C = {
-  fr:{closing:"Fin de service",closing_q:"Ce qui est jeté à la fermeture",saved:"Enregistré",u_portions:"portions",u_g:"g"},
-  de:{closing:"Dienstende",closing_q:"Was bei Schliessung weggeworfen wird",saved:"Gespeichert",u_portions:"Portionen",u_g:"g"},
-  it:{closing:"Fine servizio",closing_q:"Cosa si butta alla chiusura",saved:"Salvato",u_portions:"porzioni",u_g:"g"},
-  en:{closing:"End of service",closing_q:"What is thrown away at closing",saved:"Saved",u_portions:"portions",u_g:"g"},
-  pt:{closing:"Fim de serviço",closing_q:"O que se deita fora no fecho",saved:"Guardado",u_portions:"porções",u_g:"g"},
-  es:{closing:"Fin de servicio",closing_q:"Lo que se tira al cerrar",saved:"Guardado",u_portions:"porciones",u_g:"g"},
-  sq:{closing:"Fund i shërbimit",closing_q:"Çfarë hidhet në mbyllje",saved:"U ruajt",u_portions:"porcione",u_g:"g"}
+  fr:{closing:"Fin de service",closing_q:"Ce qui est jeté à la fermeture",saved:"Enregistré",u_portions:"portions",u_g:"g","u_unités":"unités"},
+  de:{closing:"Dienstende",closing_q:"Was bei Schliessung weggeworfen wird",saved:"Gespeichert",u_portions:"Portionen",u_g:"g","u_unités":"Stück"},
+  it:{closing:"Fine servizio",closing_q:"Cosa si butta alla chiusura",saved:"Salvato",u_portions:"porzioni",u_g:"g","u_unités":"unità"},
+  en:{closing:"End of service",closing_q:"What is thrown away at closing",saved:"Saved",u_portions:"portions",u_g:"g","u_unités":"units"},
+  pt:{closing:"Fim de serviço",closing_q:"O que se deita fora no fecho",saved:"Guardado",u_portions:"porções",u_g:"g","u_unités":"unidades"},
+  es:{closing:"Fin de servicio",closing_q:"Lo que se tira al cerrar",saved:"Guardado",u_portions:"porciones",u_g:"g","u_unités":"unidades"},
+  sq:{closing:"Fund i shërbimit",closing_q:"Çfarë hidhet në mbyllje",saved:"U ruajt",u_portions:"porcione",u_g:"g","u_unités":"copë"}
 };
 for (const k in I18N_X) Object.assign(I18N[k], I18N_X[k], I18N_C[k]);
 const unitL = (lang,u) => u==="pièces" ? tr(lang,"pieces") : tr(lang,"u_"+u);
@@ -222,8 +222,8 @@ const DEFAULT_RESTAURANTS = [
 const DEFAULT_SETTINGS = { pin:"1234", volume:0.8, report_emails:[] };
 const DEMO_COST = { p_mignon:0.8, p_burger:1.5, p_pieces:1.1 };
 const DEFAULT_SIDES = [
-  {id:"s_riz",name:"Riz",unit:"portions",cost:0,active:true},{id:"s_mais",name:"Maïs",unit:"portions",cost:0,active:true},
-  {id:"s_puree",name:"Purée",unit:"portions",cost:0,active:true},{id:"s_frites",name:"Frites",unit:"portions",cost:0,active:true}
+  {id:"s_riz",name:"Riz",unit:"g",cost:0,active:true},{id:"s_mais",name:"Maïs",unit:"unités",cost:0,active:true},
+  {id:"s_puree",name:"Purée",unit:"g",cost:0,active:true},{id:"s_frites",name:"Frites",unit:"portions",cost:0,active:true}
 ];
 const DEMO_SIDE_COST = { s_riz:0.6, s_mais:0.5, s_puree:0.7, s_frites:0.9 };
 
@@ -286,7 +286,7 @@ function seedDemo(){
     DEFAULT_RESTAURANTS.forEach((r,ri)=>{
       const traffic=[1,0.8,1.2,0.65][ri]*([5,6].includes(day.getDay())?1.3:1);
       const tc=new Date(day); tc.setHours(22,rnd(5,40),0,0);
-      if (tc<=now) DEFAULT_SIDES.forEach(sd=>{ const q=rnd(0,6); if(q) out.push(ev("closing",r.id,sd,sd.unit,q,tc)); });
+      if (tc<=now) DEFAULT_SIDES.forEach(sd=>{ const q=sd.unit==="g"?rnd(0,8)*50:rnd(0,6); if(q) out.push(ev("closing",r.id,sd,sd.unit,q,tc)); });
       DEFAULT_PRODUCTS.forEach(p=>{
         const n=Math.round(rnd(8,15)*traffic);
         for (let i=0;i<n;i++){
@@ -597,7 +597,7 @@ function closingSheet(){
   const r=currentResto(), L=k=>tr(r.lang,k);
   const sides=(CFG.sides||[]).filter(x=>x.active!==false);
   const qty=Object.fromEntries(sides.map(x=>[x.id,0]));
-  const step = u => u==="g" ? 100 : 1;
+  const step = u => u==="g" ? 50 : 1;
   const rows=sides.map(x=>{
     const out=h("output",{class:"cq"},"0");
     const set=v=>{ qty[x.id]=Math.max(0,v); out.textContent=qty[x.id]; };
@@ -877,8 +877,8 @@ function sidesEditor(){
       h("label",{class:"f",for:"sn"+i},"Nom",h("input",{id:"sn"+i,value:x.name,oninput:e=>x.name=e.target.value})),
       h("div",{class:"row-act"},
         h("label",{class:"f",for:"su"+i,style:{flex:"1"}},"Unité",h("select",{id:"su"+i,onchange:e=>{x.unit=e.target.value;draw();}},
-          [["portions","Portions"],["g","Grammes"],["pièces","Pièces"]].map(([v,l])=>h("option",{value:v,selected:x.unit===v},l)))),
-        h("label",{class:"f",for:"sc"+i,style:{flex:"1"}},x.unit==="g"?"CHF / 100 g":x.unit==="pièces"?"CHF / pièce":"CHF / portion",
+          [["g","Grammes"],["portions","Portions"],["unités","Unités"],["pièces","Pièces"]].map(([v,l])=>h("option",{value:v,selected:x.unit===v},l)))),
+        h("label",{class:"f",for:"sc"+i,style:{flex:"1"}},x.unit==="g"?"CHF / 100 g":x.unit==="pièces"?"CHF / pièce":x.unit==="unités"?"CHF / unité":"CHF / portion",
           h("input",{id:"sc"+i,type:"number",min:"0",step:"0.05",inputmode:"decimal",value:x.cost??0,oninput:e=>x.cost=parseFloat(e.target.value)||0}))),
       h("div",{class:"row-act"},
         h("label",{class:"chk"},h("input",{type:"checkbox",checked:x.active!==false,onchange:e=>x.active=e.target.checked}),"Visible"),
