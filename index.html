@@ -226,7 +226,16 @@ const I18N_S = {
   es:{sift:"Rebozado",sift_alert:"TAMIZAR EL REBOZADO",sift_since:"piezas fritas desde el último tamizado",sift_q:"¿Se ha tamizado el rebozado?",sift_done:"Rebozado tamizado",sift_btn:"Hecho"},
   sq:{sift:"Panimi",sift_alert:"SITE PANIMIN",sift_since:"copë të skuqura që nga sitja e fundit",sift_q:"A u sit panimi?",sift_done:"Panimi u sit",sift_btn:"U bë"}
 };
-for (const k in I18N_X) Object.assign(I18N[k], I18N_X[k], I18N_C[k], I18N_S[k]);
+const I18N_F = {
+  fr:{closing_done:"Déjà saisi aujourd'hui à",resume:"minuteur(s) en cours — appuie sur Démarrer pour reprendre",undo_confirm:"Confirmer l'annulation"},
+  de:{closing_done:"Heute bereits erfasst um",resume:"Timer laufen — Service starten, um fortzufahren",undo_confirm:"Abbrechen bestätigen"},
+  it:{closing_done:"Già inserito oggi alle",resume:"timer in corso — premi Avvia per riprendere",undo_confirm:"Conferma annullamento"},
+  en:{closing_done:"Already entered today at",resume:"timer(s) running — tap Start to resume",undo_confirm:"Confirm cancel"},
+  pt:{closing_done:"Já registado hoje às",resume:"temporizador(es) em curso — toque em Iniciar para retomar",undo_confirm:"Confirmar cancelamento"},
+  es:{closing_done:"Ya registrado hoy a las",resume:"temporizador(es) en curso — pulsa Iniciar para continuar",undo_confirm:"Confirmar cancelación"},
+  sq:{closing_done:"U regjistrua sot në",resume:"kohëmatës në vazhdim — shtyp Fillo për të vazhduar",undo_confirm:"Konfirmo anulimin"}
+};
+for (const k in I18N_X) Object.assign(I18N[k], I18N_X[k], I18N_C[k], I18N_S[k], I18N_F[k]);
 const unitL = (lang,u) => u==="pièces" ? tr(lang,"pieces") : tr(lang,"u_"+u);
 const REASONS = ["time","overcooked","dropped","other"];
 const REASON_FR = {time:"Temps dépassé",overcooked:"Trop cuit / sec",dropped:"Tombé",other:"Autre"};
@@ -349,7 +358,8 @@ function LocalStore(){
     async saveProducts(l){ LS.set("dc_products",l); },
     async saveRestaurants(l){ LS.set("dc_restaurants",l); },
     async saveSides(l){ LS.set("dc_sides",l); },
-    async saveSettings(s){ LS.set("dc_settings",s); },
+    async saveSettings(s){ LS.set("dc_settings",{...LS.get("dc_settings",{}),...s}); },
+    async checkPin(pin){ return pin===String(LS.get("dc_settings",{}).pin||DEFAULT_SETTINGS.pin); },
     async insertEvents(list){ const ids=new Set(events.map(e=>e.id)); list.forEach(e=>{ if(!ids.has(e.id)) events.push(e); }); LS.set("dc_events",events); },
     async fetchEvents(from,to,resto){ return events.filter(e=>e.created_at>=from && e.created_at<to && (!resto||e.restaurant_id===resto)).sort((a,b)=>a.created_at<b.created_at?-1:1); },
     async fetchAgg(from,to,resto,grain){ return aggLocal(await this.fetchEvents(from,to,resto),grain); },
@@ -392,12 +402,13 @@ function SupaStore(){
       const del = rows.length ? sb.from("sides").delete().not("id","in",`(${rows.map(r=>r.id).join(",")})`) : sb.from("sides").delete().neq("id","");
       chk(await del);
     },
-    async saveSettings(s){ chk(await sb.from("settings").upsert(Object.entries(s).map(([key,value])=>({key,value})))); },
+    async saveSettings(s){ const ok=chk(await sb.rpc("save_settings",{p_pin:A.pin,p_values:s})); if(!ok) throw new Error("PIN refusé, reconnecte-toi au dashboard"); },
+    async checkPin(pin){ return !!chk(await sb.rpc("check_pin",{p_pin:pin})); },
     async insertEvents(list){ chk(await sb.from("events").upsert(list,{onConflict:"id",ignoreDuplicates:true})); },
     async fetchEvents(from,to,resto){
       let all=[];
       for (let i=0;;i+=1000){
-        let q=sb.from("events").select("*").gte("created_at",from).lt("created_at",to).order("created_at").range(i,i+999);
+        let q=sb.from("events").select("*").gte("created_at",from).lt("created_at",to).order("created_at").order("id").range(i,i+999);
         if (resto) q=q.eq("restaurant_id",resto);
         const data=chk(await q); all=all.concat(data);
         if (data.length<1000) break;
@@ -433,7 +444,7 @@ function SupaStore(){
     async cookedSince(resto,since){
       let total=0;
       for (let i=0;;i+=1000){
-        let q=sb.from("events").select("type,pieces").eq("restaurant_id",resto).in("type",["cook","cancel"]).order("created_at").range(i,i+999);
+        let q=sb.from("events").select("type,pieces").eq("restaurant_id",resto).in("type",["cook","cancel"]).order("created_at").order("id").range(i,i+999);
         if (since) q=q.gt("created_at",since);
         const d=chk(await q); d.forEach(x=>total+=(x.type==="cook"?1:-1)*x.pieces); if (d.length<1000) break;
       }
@@ -452,13 +463,25 @@ const prodById = id => CFG.products.find(p=>p.id===id);
 /* ---------- File d'envoi (résiste aux coupures wifi) ---------- */
 let outbox = LS.get("dc_outbox", []), flushing=false;
 function logEvent(e){ outbox.push(e); LS.set("dc_outbox",outbox); flush(); }
+const withTimeout = (pr,ms=15000) => Promise.race([pr, new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),ms))]);
+const isDbReject = e => !!(e && e.code && !/timeout|fetch|network/i.test(String(e.message||"")));
 async function flush(){
   if (flushing || !outbox.length) { updateSync(); return; }
-  flushing=true; const batch=outbox.slice();
-  try{ await store.insertEvents(batch); const sent=new Set(batch.map(b=>b.id)); outbox=outbox.filter(x=>!sent.has(x.id)); LS.set("dc_outbox",outbox); }
-  catch(e){ flushing=false; updateSync(); return; /* on réessaie dans 15 s */ }
+  flushing=true; const batch=outbox.slice(0,200), sent=[];
+  try{ await withTimeout(store.insertEvents(batch)); batch.forEach(b=>sent.push(b.id)); }
+  catch(e){
+    if (isDbReject(e)){ // une ligne refusée par la base ne doit pas bloquer les autres
+      const bad=[];
+      for (const one of batch){
+        try{ await withTimeout(store.insertEvents([one])); sent.push(one.id); }
+        catch(e2){ if (isDbReject(e2)){ bad.push(one); sent.push(one.id); } else break; }
+      }
+      if (bad.length) LS.set("dc_rejected", LS.get("dc_rejected",[]).concat(bad).slice(-500));
+    }
+  }
+  if (sent.length){ const ids=new Set(sent); outbox=outbox.filter(x=>!ids.has(x.id)); LS.set("dc_outbox",outbox); }
   flushing=false; updateSync();
-  if (outbox.length) flush();
+  if (sent.length && outbox.length) flush();
 }
 setInterval(flush, 15000);
 function updateSync(){ const el=$("#sync"); if(!el) return; const r=currentResto(); el.textContent = outbox.length ? `${outbox.length} ${tr(r?.lang,"pending")}` : ""; }
@@ -480,7 +503,17 @@ const K = { restoId:LS.get("dc_tablet_resto",null), timers:LS.get("dc_timers",{}
 K.sift = { count:0, since:null, ready:false };
 async function refreshSift(){
   if (!K.restoId) return;
-  try{ const since=await store.lastSift(K.restoId); const c=await store.cookedSince(K.restoId,since); K.sift={count:c,since,ready:true}; }catch(e){}
+  try{
+    const last=await store.lastSift(K.restoId);
+    const since=last || new Date(Date.now()-14*86400000).toISOString();
+    let c=await store.cookedSince(K.restoId,since);
+    // ajouter les actions pas encore envoyées
+    const pend=outbox.filter(e=>e.restaurant_id===K.restoId);
+    let iSift=-1; pend.forEach((e,i)=>{ if(e.type==="sift") iSift=i; });
+    if (iSift>=0) c=0;
+    pend.slice(iSift+1).forEach(e=>{ if(e.type==="cook") c+=e.pieces; else if(e.type==="cancel") c-=e.pieces; });
+    K.sift={count:Math.max(0,c),since,ready:true};
+  }catch(e){}
   drawSift();
 }
 const siftEvery = () => Number(CFG.settings.sift_every)||0;
@@ -538,6 +571,7 @@ const saveTimers = () => LS.set("dc_timers", K.timers);
 function initAudio(){ try{ audio = audio || new (window.AudioContext||window.webkitAudioContext)(); audio.resume(); }catch(e){} }
 function beep(){
   if (!audio) return;
+  try{ if (audio.state!=="running") audio.resume(); }catch(e){}
   const vol=Math.max(0.05,Number(CFG.settings.volume??0.8)), t0=audio.currentTime;
   [0,0.22,0.44].forEach(off=>{
     const o=audio.createOscillator(), g=audio.createGain();
@@ -553,11 +587,12 @@ document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==
 function stopKitchen(){ kIntervals.forEach(clearInterval); kIntervals=[]; }
 
 function renderKitchen(){
+  stopKitchen();
   const app=$("#app"); app.innerHTML="";
   const r=currentResto();
   if (!K.started || !r){ app.append(startScreen()); return; }
   const L=k=>tr(r.lang,k);
-  const grid=h("div",{class:"grid"}, CFG.products.filter(p=>p.active!==false).map(p=>
+  const grid=h("div",{class:"grid"}, CFG.products.filter(p=>p.active!==false || K.timers[p.id]).map(p=>
     h("button",{class:"tile","data-id":p.id,style:{"--c":p.color},onclick:()=>onTile(p)},
       h("div",{class:"t-name"},p.name), h("div",{class:"t-cd"},"--:--"), h("div",{class:"t-sub"}), h("div",{class:"t-bar"},h("i"))
     )));
@@ -575,7 +610,7 @@ function renderKitchen(){
     h("button",{class:"sift-bar",id:"sift-bar",hidden:true,onclick:siftSheet},h("span",{class:"sb-txt"}),h("span",{class:"sb-cta"},L("sift_btn")+" →")),
     grid));
   tick(); updateSync(); refreshSift();
-  kIntervals.push(setInterval(tick,250), setInterval(alarmCheck,1500), setInterval(refreshConfig,60000), setInterval(loadHistory,3600000), setInterval(refreshSift,60000));
+  kIntervals.push(setInterval(tick,250), setInterval(refreshConfig,60000), setInterval(loadHistory,3600000), setInterval(refreshSift,60000));
   if (!K.hist.length) loadHistory();
 }
 
@@ -590,7 +625,9 @@ function startScreen(){
   }}, tr(lang(),"start"));
   const lab=h("label",{class:"f",for:"resto-pick"},tr(lang(),"resto"),sel);
   sel.addEventListener("change",()=>{ btn.textContent=tr(lang(),"start"); lab.firstChild.textContent=tr(lang(),"resto"); });
+  const running=Object.keys(K.timers).filter(id=>prodById(id)).length;
   return h("div",{class:"start"},
+    running ? h("div",{class:"alert",style:{"font-size":"20px"}},`⚠ ${running} ${tr(lang(),"resume")}`) : null,
     (()=>{ const i=h("div",{class:"start-ic"}); i.innerHTML=LOGO_GLYPH; return i; })(),
     h("h1",{},"Kitchen ",h("span",{},"Chic Chicken")),
     h("p",{},"Minuteurs bain-marie · alarme son + écran rouge · chaque lancement et chaque pièce jetée est enregistré."),
@@ -618,6 +655,7 @@ function tick(){
   const c=$("#clock"); if(c) c.textContent=new Date().toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"});
 }
 let lastSiftBeep=0;
+setInterval(()=>{ if (K.started) alarmCheck(); }, 1500); // l'alarme continue même sur le dashboard
 function alarmCheck(){
   const now=Date.now();
   if (Object.entries(K.timers).some(([id,tm])=>prodById(id) && now>=tm.end)) beep();
@@ -658,7 +696,7 @@ function onTile(p){
       h("h2",{},p.name), h("p",{class:"sub"},`${L("running")} · ${tm.pieces} ${L("pieces")} · ${mmss(tm.end-Date.now())}`),
       h("button",{class:"act prim",onclick:()=>{ close(); endBatch(p,0); }},L("sold")),
       h("button",{class:"act",onclick:()=>{ close(); discardSheet(p); }},L("discard_stop")),
-      h("button",{class:"act dang",onclick:()=>{ close(); cancelBatch(p); }},L("undo")),
+      h("button",{class:"act dang",onclick:e=>{ const b=e.currentTarget; if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent=L("undo_confirm")+" ✓"; b.style.background="var(--danger)"; b.style.color="#fff"; return; } close(); cancelBatch(p); }},L("undo")),
       h("button",{class:"act ghost",onclick:close},L("back"))
     ]);
   } else discardSheet(p);
@@ -700,11 +738,14 @@ function closingSheet(){
       h("button",{class:"cb","aria-label":"moins "+x.name,onclick:()=>set(qty[x.id]-step(x.unit))},"−"), out,
       h("button",{class:"cb","aria-label":"plus "+x.name,onclick:()=>set(qty[x.id]+step(x.unit))},"+"));
   });
+  const lastC=LS.get("dc_last_closing",null), already = lastC && new Date(lastC).toDateString()===new Date().toDateString();
   openSheet(close=>[
     h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")),
+    already ? h("div",{class:"alert"},`${L("closing_done")} ${new Date(lastC).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"})}`) : null,
     h("div",{class:"crows"},rows),
     h("button",{class:"act prim",onclick:()=>{
       sides.forEach(x=>{ if(qty[x.id]>0) logEvent(ev("closing",K.restoId,x,x.unit,qty[x.id])); });
+      if (Object.values(qty).some(v=>v>0)) LS.set("dc_last_closing",new Date().toISOString());
       close(); toast(L("saved"));
     }},L("confirm")),
     h("button",{class:"act ghost",onclick:close},L("back"))
@@ -749,7 +790,7 @@ function periodBounds(k){
     case "month": return [new Date(y,sod.getMonth(),1),add(sod,1)];
     case "year": return [new Date(y,0,1),add(sod,1)];
     case "lastyear": return [new Date(y-1,0,1),new Date(y,0,1)];
-    case "custom": { const f=new Date(A.from+"T00:00:00"), t=add(new Date(A.to+"T00:00:00"),1); return f<t?[f,t]:[t,f]; }
+    case "custom": { const [a,b]=[A.from,A.to].sort(); return [new Date(a+"T00:00:00"), add(new Date(b+"T00:00:00"),1)]; }
     default: return [sod,add(sod,1)];
   }
 }
@@ -787,7 +828,8 @@ function renderAdmin(){
 
 function pinScreen(){
   const inp=h("input",{id:"pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"••••"});
-  const go=()=>{ if (inp.value===String(CFG.settings.pin)){ A.unlocked=true; renderAdmin(); } else { toast("Code incorrect"); inp.value=""; inp.focus(); } };
+  const go=async()=>{ let ok=false; try{ ok=await store.checkPin(inp.value); }catch(e){ toast("Connexion impossible"); return; }
+    if (ok){ A.unlocked=true; A.pin=inp.value; renderAdmin(); } else { toast("Code incorrect"); inp.value=""; inp.focus(); } };
   inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
   setTimeout(()=>inp.focus(),50);
   return h("div",{class:"pin"},
@@ -1103,7 +1145,7 @@ function settingsView(box){
     h("h3",{style:{"font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px",margin:"8px 0 10px"}},"Réglages"),
     h("div",{class:"cards"},
       h("div",{class:"card"},
-        h("label",{class:"f",for:"s-pin"},"Code PIN du dashboard",h("input",{id:"s-pin",inputmode:"numeric",value:sd.pin,oninput:e=>sd.pin=e.target.value.trim()}))),
+        h("label",{class:"f",for:"s-pin"},"Code PIN du dashboard",h("input",{id:"s-pin",inputmode:"numeric",value:(sd.pin=A.pin||sd.pin||""),oninput:e=>sd.pin=e.target.value.trim()}))),
       h("div",{class:"card"},
         h("label",{class:"f",for:"s-sift"},h("span",{},"Filtrer la panure toutes les ",h("span",{class:"hint"},"— pièces cuites (0 = désactivé)")),
           h("input",{id:"s-sift",type:"number",min:"0",step:"10",inputmode:"numeric",value:sd.sift_every??200,oninput:e=>sd.sift_every=Math.max(0,parseInt(e.target.value,10)||0)})),
@@ -1120,7 +1162,7 @@ function settingsView(box){
       h("button",{class:"btn prim",onclick:async()=>{
         if (!/^\d{4,8}$/.test(sd.pin)){ toast("Le PIN doit faire 4 à 8 chiffres"); return; }
         const bad=(sd.report_emails||[]).find(m=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)); if (bad){ toast("Adresse e-mail invalide : "+bad); return; }
-        try{ await store.saveRestaurants(rd); await store.saveSettings({pin:sd.pin,volume:sd.volume,report_emails:sd.report_emails||[],sift_every:Number(sd.sift_every)||0}); CFG.restaurants=rd; CFG.settings=sd; LS.set("dc_cfg",CFG); toast("Réglages enregistrés"); }
+        try{ await store.saveRestaurants(rd); await store.saveSettings({pin:sd.pin,volume:sd.volume,report_emails:sd.report_emails||[],sift_every:Number(sd.sift_every)||0}); A.pin=sd.pin; const {pin:_p,...pub}=sd; CFG.restaurants=rd; CFG.settings=pub; LS.set("dc_cfg",CFG); toast("Réglages enregistrés"); }
         catch(e){ toast("Échec de l'enregistrement : "+(e.message||e)); }
       }},"Enregistrer"),
       store.mode==="demo" ? h("button",{class:"btn dang",onclick:async()=>{ await store.clearEvents(); toast("Données d'exemple effacées"); }},"Effacer les données d'exemple") : null));
@@ -1164,7 +1206,7 @@ async function reportsView(box){
 async function sendReportNow(e,kind,date){
   const b=e.currentTarget, old=b.textContent; b.disabled=true; b.textContent="Génération en cours…";
   try{
-    const r=await fetch(CONFIG.SUPABASE_URL+"/functions/v1/weekly-report",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+CONFIG.SUPABASE_ANON_KEY,apikey:CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify({mode:"manual",kind:kind==="year"||kind==="day"?kind:"week",date})});
+    const r=await fetch(CONFIG.SUPABASE_URL+"/functions/v1/weekly-report",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+CONFIG.SUPABASE_ANON_KEY,apikey:CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify({mode:"manual",kind:kind==="year"||kind==="day"?kind:"week",date,pin:A.pin})});
     const j=await r.json().catch(()=>({}));
     toast(!r.ok ? (j.error||"Échec de l'envoi") : j.emailed ? `PDF archivés et envoyés à ${(j.to||[]).join(", ")}` : (j.warning||"PDF archivés"));
     if (r.ok && A.tab==="reports") renderAdmin();
