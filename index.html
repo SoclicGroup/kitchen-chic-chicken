@@ -73,6 +73,7 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .sheet .sub{color:var(--muted);margin:0 0 4px;font-weight:600;font-size:17px}
 .qty{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
 .big{min-height:96px;border-radius:18px;border:0;background:var(--surface-2);font-family:var(--f-display);font-weight:800;font-size:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;touch-action:manipulation}
+.big{padding:8px 6px;min-width:0;overflow:hidden;font-variant-numeric:tabular-nums;white-space:nowrap}.big.mid{font-size:32px}.big.long{font-size:22px}
 .big small{font-family:var(--f-body);font-size:14px;font-weight:600;color:var(--muted);margin-top:6px}
 .k .top .chip{min-height:52px;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;font-size:16px}
 .closing-btn{background:var(--surface-2)}
@@ -248,7 +249,7 @@ const PRESETS = ["#D6F24A","#F5B83D","#F27F3D","#FF8FA3","#C77DFF","#5EB8FF","#4
 const DEFAULT_PRODUCTS = [
   {id:"p_mignon",name:"Filets mignons",color:"#F5B83D",minutes:20,cost:0,active:true,quantities:[{label:"10",pieces:10},{label:"20",pieces:20},{label:"30",pieces:30}]},
   {id:"p_burger",name:"Filets burger",color:"#F27F3D",minutes:20,cost:0,active:true,quantities:[{label:"2",pieces:2},{label:"4",pieces:4},{label:"6",pieces:6},{label:"8",pieces:8}]},
-  {id:"p_pieces",name:"Pièces de poulet",color:"#D6F24A",minutes:30,cost:0,active:true,quantities:[{label:"¼",pieces:9},{label:"½",pieces:18},{label:"¾",pieces:27},{label:"Complète",pieces:36}]}
+  {id:"p_pieces",name:"Pièces de poulet",color:"#D6F24A",minutes:30,cost:0,active:true,quantities:[{label:"1/4",pieces:9},{label:"2/4",pieces:18},{label:"3/4",pieces:27},{label:"4/4",pieces:36}]}
 ];
 const DEFAULT_RESTAURANTS = [
   {id:"r1",name:"Chic Chicken 1",lang:"fr"},{id:"r2",name:"Chic Chicken 2",lang:"fr"},
@@ -687,7 +688,7 @@ function onTile(p){
     const rec=advise(p);
     openSheet(close=>[
       h("h2",{},p.name), h("p",{class:"sub"},L("qty")),
-      h("div",{class:"qty"}, p.quantities.map(q=>h("button",{class:"big"+(q.label===rec?" rec":""),onclick:()=>{ close(); startBatch(p,q); }},
+      h("div",{class:"qty"}, p.quantities.map(q=>h("button",{class:"big"+(String(q.label).length>5?" long":String(q.label).length>3?" mid":"")+(q.label===rec?" rec":""),onclick:()=>{ close(); startBatch(p,q); }},
         q.label===rec ? h("span",{class:"tag"},"★ "+L("advice")) : null,
         q.label, h("small",{}, q.label===String(q.pieces) ? L("pieces") : q.pieces+" "+L("pieces"))))),
       h("button",{class:"act ghost",onclick:close},L("back"))
@@ -1093,7 +1094,7 @@ function timersView(box){
         h("label",{class:"f",for:"pn"+i},"Nom du minuteur",h("input",{id:"pn"+i,value:p.name,oninput:e=>p.name=e.target.value})),
         h("label",{class:"f",for:"pm"+i},"Minutes au bain-marie",h("input",{id:"pm"+i,type:"number",min:"1",max:"240",inputmode:"numeric",value:p.minutes,oninput:e=>p.minutes=parseInt(e.target.value,10)||0})),
         h("label",{class:"f",for:"pc"+i},"Coût par pièce (CHF)",h("input",{id:"pc"+i,type:"number",min:"0",step:"0.05",inputmode:"decimal",value:p.cost??0,oninput:e=>p.cost=parseFloat(e.target.value)||0})),
-        h("label",{class:"f wide",for:"pq"+i},h("span",{},"Boutons quantité ",h("span",{class:"hint"},"— ex : 10, 20, 30  ou  ¼=9, ½=18, ¾=27, Complète=36")),
+        h("label",{class:"f wide",for:"pq"+i},h("span",{},"Boutons quantité ",h("span",{class:"hint"},"— ex : 10, 20, 30  ou  1/4=9, 2/4=18, 3/4=27, 4/4=36")),
           h("input",{id:"pq"+i,value:qToText(p.quantities),oninput:e=>p._q=e.target.value})),
         h("div",{class:"wide sw-wrap"},h("div",{class:"f",style:{"margin-bottom":"6px"}},"Couleur du carré"),sw),
         h("div",{class:"wide row-act"},
