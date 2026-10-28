@@ -74,6 +74,24 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .qty{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
 .big{min-height:96px;border-radius:18px;border:0;background:var(--surface-2);font-family:var(--f-display);font-weight:800;font-size:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;touch-action:manipulation}
 .big small{font-family:var(--f-body);font-size:14px;font-weight:600;color:var(--muted);margin-top:6px}
+.closing-btn{background:var(--surface-2)}
+.crows{display:flex;flex-direction:column;gap:8px}
+.crow{display:grid;grid-template-columns:1fr 64px 3.2ch 64px;gap:10px;align-items:center;background:var(--surface-2);border-radius:16px;padding:10px 12px}
+.cn{font-family:var(--f-display);font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
+.cn small{display:block;font-family:var(--f-body);font-size:13px;font-weight:600;color:var(--muted);text-transform:none;margin-top:4px}
+.cb{width:64px;height:64px;border-radius:50%;border:0;background:var(--surface);font-size:34px;font-weight:700;touch-action:manipulation}
+.cq{font-family:var(--f-display);font-weight:800;font-size:44px;text-align:center;font-variant-numeric:tabular-nums}
+.big.rec{box-shadow:inset 0 0 0 3px var(--accent);position:relative}
+.big .tag{font-family:var(--f-body);font-size:12px;font-weight:700;color:var(--accent-ink);background:var(--accent);border-radius:999px;padding:2px 8px;margin-bottom:6px;letter-spacing:.02em}
+.rwrap.need{animation:need .5s}
+@keyframes need{25%,75%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
+.rwrap.need .sub{color:var(--danger-text)}
+.hbar{display:grid;grid-template-columns:minmax(110px,180px) 1fr auto;gap:10px;align-items:center;margin-bottom:8px}
+.hbar .tr{height:14px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.hbar .tr i{display:block;height:100%;background:var(--danger);border-radius:inherit}
+.hbar b{font-variant-numeric:tabular-nums;font-weight:600}
+.panel{background:var(--surface);border-radius:14px;padding:16px}
+.kpi.ok .v{color:var(--ok)}
 .big:active{background:var(--accent);color:var(--accent-ink)}
 .act{min-height:66px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2);font-weight:700;font-size:19px;padding:0 20px;text-align:left;touch-action:manipulation}
 .act.prim{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -94,6 +112,8 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .kpi .l{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .kpi .v{font-family:var(--f-display);font-weight:800;font-size:46px;line-height:1.05;font-variant-numeric:tabular-nums}
 .kpi .h{font-size:12px;color:var(--muted)}
+.kpi.money .v{font-size:32px;line-height:1.25}
+.filters.custom label.f{width:auto}
 .kpi.sold .v{color:var(--accent)}
 .kpi.loss .v{color:var(--danger-text)}
 .blk{margin-bottom:28px}
@@ -109,6 +129,8 @@ td.loss{color:var(--danger-text);font-weight:700}
 .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
 .p-cook{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
 .p-discard{background:color-mix(in srgb,var(--danger) 22%,transparent);color:var(--danger-text)}
+.p-closing{background:color-mix(in srgb,#8FB8FF 22%,transparent);color:#8FB8FF}
+.p-close{background:var(--surface-2);color:var(--muted)}
 .p-cancel{background:var(--surface-2);color:var(--muted)}
 .chart{display:flex;align-items:stretch;gap:4px;height:220px;padding:14px 12px 0;background:var(--surface);border-radius:14px;overflow-x:auto;background-image:repeating-linear-gradient(to top,var(--line) 0 1px,transparent 1px 25%);background-origin:content-box;background-size:100% calc(100% - 26px);background-repeat:no-repeat}
 .col{flex:1 0 30px;display:flex;flex-direction:column;align-items:center;gap:6px}
@@ -160,6 +182,28 @@ const I18N = {
   es:{start:"Iniciar servicio",resto:"Restaurante de esta tableta",tap:"Toca para iniciar",qty:"¿Qué cantidad?",pieces:"piezas",back:"Volver",sold:"Todo vendido — parar",discard_stop:"Tirar piezas y parar",undo:"Cancelar (iniciado por error)",expired:"TERMINADO",expired_sub:"Tirar lo que sobra",how_many:"¿Cuántas piezas tiradas?",confirm:"Confirmar",none:"Ninguna",all:"Todas",running:"En curso",pending:"pendiente de envío"},
   sq:{start:"Fillo shërbimin",resto:"Restoranti i këtij tableti",tap:"Prek për të nisur",qty:"Sa copë?",pieces:"copë",back:"Kthehu",sold:"Shitur të gjitha — ndalo",discard_stop:"Hidh copë dhe ndalo",undo:"Anulo (nisur gabimisht)",expired:"MBAROI",expired_sub:"Hidh mbetjet",how_many:"Sa copë u hodhën?",confirm:"Konfirmo",none:"Asnjë",all:"Të gjitha",running:"Në vazhdim",pending:"në pritje"}
 };
+const I18N_X = {
+  fr:{reason:"Pourquoi ?",r_time:"Temps dépassé",r_overcooked:"Trop cuit / sec",r_dropped:"Tombé",r_other:"Autre",advice:"Conseillé"},
+  de:{reason:"Warum?",r_time:"Zeit überschritten",r_overcooked:"Zu lange / trocken",r_dropped:"Heruntergefallen",r_other:"Anderes",advice:"Empfohlen"},
+  it:{reason:"Perché?",r_time:"Tempo superato",r_overcooked:"Troppo cotto / secco",r_dropped:"Caduto",r_other:"Altro",advice:"Consigliato"},
+  en:{reason:"Why?",r_time:"Time exceeded",r_overcooked:"Overcooked / dry",r_dropped:"Dropped",r_other:"Other",advice:"Suggested"},
+  pt:{reason:"Porquê?",r_time:"Tempo ultrapassado",r_overcooked:"Demasiado cozido / seco",r_dropped:"Caiu",r_other:"Outro",advice:"Aconselhado"},
+  es:{reason:"¿Por qué?",r_time:"Tiempo superado",r_overcooked:"Demasiado hecho / seco",r_dropped:"Se cayó",r_other:"Otro",advice:"Recomendado"},
+  sq:{reason:"Pse?",r_time:"Koha kaloi",r_overcooked:"Tepër i pjekur / i thatë",r_dropped:"Ra në tokë",r_other:"Tjetër",advice:"Rekomanduar"}
+};
+const I18N_C = {
+  fr:{closing:"Fin de service",closing_q:"Ce qui est jeté à la fermeture",saved:"Enregistré",u_portions:"portions",u_g:"g"},
+  de:{closing:"Dienstende",closing_q:"Was bei Schliessung weggeworfen wird",saved:"Gespeichert",u_portions:"Portionen",u_g:"g"},
+  it:{closing:"Fine servizio",closing_q:"Cosa si butta alla chiusura",saved:"Salvato",u_portions:"porzioni",u_g:"g"},
+  en:{closing:"End of service",closing_q:"What is thrown away at closing",saved:"Saved",u_portions:"portions",u_g:"g"},
+  pt:{closing:"Fim de serviço",closing_q:"O que se deita fora no fecho",saved:"Guardado",u_portions:"porções",u_g:"g"},
+  es:{closing:"Fin de servicio",closing_q:"Lo que se tira al cerrar",saved:"Guardado",u_portions:"porciones",u_g:"g"},
+  sq:{closing:"Fund i shërbimit",closing_q:"Çfarë hidhet në mbyllje",saved:"U ruajt",u_portions:"porcione",u_g:"g"}
+};
+for (const k in I18N_X) Object.assign(I18N[k], I18N_X[k], I18N_C[k]);
+const unitL = (lang,u) => u==="pièces" ? tr(lang,"pieces") : tr(lang,"u_"+u);
+const REASONS = ["time","overcooked","dropped","other"];
+const REASON_FR = {time:"Temps dépassé",overcooked:"Trop cuit / sec",dropped:"Tombé",other:"Autre"};
 const tr = (lang,k) => (I18N[lang]||I18N.fr)[k] ?? I18N.fr[k];
 
 const LOGO_GLYPH = `<svg viewBox="40 40 432 432" aria-hidden="true"><rect x="216" y="62" width="80" height="38" rx="12" fill="#D6F24A"/><rect x="242" y="96" width="28" height="40" fill="currentColor"/><rect x="368" y="118" width="30" height="52" rx="9" fill="currentColor" transform="rotate(45 383 144)"/><circle cx="256" cy="292" r="150" fill="none" stroke="currentColor" stroke-width="32"/><path d="M256 292 L256 170 A122 122 0 0 1 361.7 353 Z" fill="#D6F24A"/><circle cx="256" cy="292" r="22" fill="currentColor"/></svg>`;
@@ -167,15 +211,21 @@ function logoEl(){ const el=h("span",{class:"logo"}); el.innerHTML=`<i class="lg
 
 const PRESETS = ["#D6F24A","#F5B83D","#F27F3D","#FF8FA3","#C77DFF","#5EB8FF","#4FD1B5","#EDEDED"];
 const DEFAULT_PRODUCTS = [
-  {id:"p_mignon",name:"Filets mignons",color:"#F5B83D",minutes:20,active:true,quantities:[{label:"10",pieces:10},{label:"20",pieces:20},{label:"30",pieces:30}]},
-  {id:"p_burger",name:"Filets burger",color:"#F27F3D",minutes:20,active:true,quantities:[{label:"2",pieces:2},{label:"4",pieces:4},{label:"6",pieces:6},{label:"8",pieces:8}]},
-  {id:"p_pieces",name:"Pièces de poulet",color:"#D6F24A",minutes:30,active:true,quantities:[{label:"¼",pieces:9},{label:"½",pieces:18},{label:"¾",pieces:27},{label:"Complète",pieces:36}]}
+  {id:"p_mignon",name:"Filets mignons",color:"#F5B83D",minutes:20,cost:0,active:true,quantities:[{label:"10",pieces:10},{label:"20",pieces:20},{label:"30",pieces:30}]},
+  {id:"p_burger",name:"Filets burger",color:"#F27F3D",minutes:20,cost:0,active:true,quantities:[{label:"2",pieces:2},{label:"4",pieces:4},{label:"6",pieces:6},{label:"8",pieces:8}]},
+  {id:"p_pieces",name:"Pièces de poulet",color:"#D6F24A",minutes:30,cost:0,active:true,quantities:[{label:"¼",pieces:9},{label:"½",pieces:18},{label:"¾",pieces:27},{label:"Complète",pieces:36}]}
 ];
 const DEFAULT_RESTAURANTS = [
   {id:"r1",name:"Chic Chicken 1",lang:"fr"},{id:"r2",name:"Chic Chicken 2",lang:"fr"},
   {id:"r3",name:"Chic Chicken 3",lang:"fr"},{id:"r4",name:"Chic Chicken 4",lang:"fr"}
 ];
-const DEFAULT_SETTINGS = { pin:"1234", volume:0.8 };
+const DEFAULT_SETTINGS = { pin:"1234", volume:0.8, report_emails:[] };
+const DEMO_COST = { p_mignon:0.8, p_burger:1.5, p_pieces:1.1 };
+const DEFAULT_SIDES = [
+  {id:"s_riz",name:"Riz",unit:"portions",cost:0,active:true},{id:"s_mais",name:"Maïs",unit:"portions",cost:0,active:true},
+  {id:"s_puree",name:"Purée",unit:"portions",cost:0,active:true},{id:"s_frites",name:"Frites",unit:"portions",cost:0,active:true}
+];
+const DEMO_SIDE_COST = { s_riz:0.6, s_mais:0.5, s_puree:0.7, s_frites:0.9 };
 
 /* ---------- Utilitaires ---------- */
 const $ = s => document.querySelector(s);
@@ -205,9 +255,27 @@ function h(tag, attrs, ...kids){
 }
 const mmss = ms => { const s=Math.max(0,Math.ceil(ms/1000)); return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; };
 function toast(msg){ const t=h("div",{class:"toast",role:"status"},msg); document.body.append(t); setTimeout(()=>t.remove(),2600); }
-function ev(type, restoId, p, label, pieces, date){
-  return { id:uid(), restaurant_id:restoId, product_id:p.id, product_name:p.name, type, label:String(label), pieces, created_at:(date||new Date()).toISOString() };
+function ev(type, restoId, p, label, pieces, date, extra){
+  return { id:uid(), restaurant_id:restoId, product_id:p.id, product_name:p.name, type, label:String(label), pieces,
+    reason:(extra&&extra.reason)||null, late_seconds:(extra&&extra.late!=null)?extra.late:null, created_at:(date||new Date()).toISOString() };
 }
+const p2 = n => String(n).padStart(2,"0");
+const dayKey = d => `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+function aggLocal(events, grain){
+  const m=new Map();
+  for (const e of events){
+    const d=new Date(e.created_at);
+    const bucket = grain==="hour" ? String(d.getHours()) : grain==="month" ? dayKey(d).slice(0,7) : dayKey(d);
+    const k=[bucket,e.restaurant_id,e.product_id,e.type,e.reason||"",e.label||""].join("|");
+    const r=m.get(k)||{bucket,restaurant_id:e.restaurant_id,product_id:e.product_id,product_name:e.product_name,type:e.type,reason:e.reason||null,label:e.label||null,n:0,pieces:0,late_n:0,late_sum:0,late_ontime:0,late5:0};
+    r.n++; r.pieces+=e.pieces;
+    if (e.late_seconds!=null){ r.late_n++; r.late_sum+=e.late_seconds; if(e.late_seconds<=120) r.late_ontime++; if(e.late_seconds>300) r.late5++; }
+    m.set(k,r);
+  }
+  return [...m.values()];
+}
+const CHF = n => "CHF "+(Math.round(n*100)/100).toLocaleString("fr-CH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const mmssS = sec => `${Math.floor(sec/60)}:${String(Math.round(sec%60)).padStart(2,"0")}`;
 const inFrame = (()=>{ try{ return window.top!==window.self; }catch(e){ return true; } })();
 
 /* ---------- Données d'exemple (mode démo) ---------- */
@@ -217,6 +285,8 @@ function seedDemo(){
     const day=new Date(now); day.setDate(now.getDate()-d);
     DEFAULT_RESTAURANTS.forEach((r,ri)=>{
       const traffic=[1,0.8,1.2,0.65][ri]*([5,6].includes(day.getDay())?1.3:1);
+      const tc=new Date(day); tc.setHours(22,rnd(5,40),0,0);
+      if (tc<=now) DEFAULT_SIDES.forEach(sd=>{ const q=rnd(0,6); if(q) out.push(ev("closing",r.id,sd,sd.unit,q,tc)); });
       DEFAULT_PRODUCTS.forEach(p=>{
         const n=Math.round(rnd(8,15)*traffic);
         for (let i=0;i<n;i++){
@@ -226,10 +296,15 @@ function seedDemo(){
           const q=p.quantities[Math.floor(Math.random()*p.quantities.length)];
           out.push(ev("cook",r.id,p,q.label,q.pieces,ts));
           const late=(hr===13||hr===21);
+          const lateS = Math.random()<0.12 ? rnd(300,720) : Math.random()<0.3 ? rnd(121,299) : rnd(5,120);
+          const t2=new Date(ts.getTime()+p.minutes*60000+lateS*1000);
+          if (t2>now) continue;
           if (Math.random()<(late?0.55:0.22)){
             const dp=Math.max(1,Math.round(q.pieces*Math.random()*(late?0.35:0.15)));
-            const t2=new Date(ts.getTime()+p.minutes*60000+rnd(0,120)*1000);
-            if (t2<=now) out.push(ev("discard",r.id,p,q.label,dp,t2));
+            const rr=Math.random(), reason = rr<0.7?"time":rr<0.85?"overcooked":rr<0.95?"dropped":"other";
+            out.push(ev("discard",r.id,p,q.label,dp,t2,{reason,late:lateS}));
+          } else if (Math.random()<0.5){
+            out.push(ev("close",r.id,p,q.label,0,t2,{late:lateS}));
           }
         }
       });
@@ -244,12 +319,16 @@ function LocalStore(){
   if (!events){ events = seedDemo(); LS.set("dc_events", events); }
   return {
     mode:"demo",
-    async loadConfig(){ return { products:LS.get("dc_products",DEFAULT_PRODUCTS), restaurants:LS.get("dc_restaurants",DEFAULT_RESTAURANTS), settings:{...DEFAULT_SETTINGS,...LS.get("dc_settings",{})} }; },
+    async loadConfig(){ return { sides:LS.get("dc_sides",DEFAULT_SIDES.map(x=>({...x,cost:DEMO_SIDE_COST[x.id]||0}))), products:LS.get("dc_products",DEFAULT_PRODUCTS.map(p=>({...p,cost:DEMO_COST[p.id]||0}))), restaurants:LS.get("dc_restaurants",DEFAULT_RESTAURANTS), settings:{...DEFAULT_SETTINGS,...LS.get("dc_settings",{})} }; },
     async saveProducts(l){ LS.set("dc_products",l); },
     async saveRestaurants(l){ LS.set("dc_restaurants",l); },
+    async saveSides(l){ LS.set("dc_sides",l); },
     async saveSettings(s){ LS.set("dc_settings",s); },
     async insertEvents(list){ const ids=new Set(events.map(e=>e.id)); list.forEach(e=>{ if(!ids.has(e.id)) events.push(e); }); LS.set("dc_events",events); },
     async fetchEvents(from,to,resto){ return events.filter(e=>e.created_at>=from && e.created_at<to && (!resto||e.restaurant_id===resto)).sort((a,b)=>a.created_at<b.created_at?-1:1); },
+    async fetchAgg(from,to,resto,grain){ return aggLocal(await this.fetchEvents(from,to,resto),grain); },
+    async fetchRecent(from,to,resto,limit){ return (await this.fetchEvents(from,to,resto)).slice(-limit).reverse(); },
+    async listReports(){ return null; },
     async clearEvents(){ events=[]; LS.set("dc_events",events); }
   };
 }
@@ -259,21 +338,28 @@ function SupaStore(){
   return {
     mode:"supabase",
     async loadConfig(){
-      const [p,r,s] = await Promise.all([
+      const [p,r,s,sd] = await Promise.all([
         sb.from("products").select("*").order("sort"),
         sb.from("restaurants").select("*").order("id"),
-        sb.from("settings").select("*")
+        sb.from("settings").select("*"),
+        sb.from("sides").select("*").order("sort")
       ]);
       const products=chk(p), restaurants=chk(r), settings={...DEFAULT_SETTINGS};
       chk(s).forEach(row=>{ settings[row.key]=row.value; });
-      return { products:products.length?products:DEFAULT_PRODUCTS, restaurants:restaurants.length?restaurants:DEFAULT_RESTAURANTS, settings };
+      return { products:products.length?products:DEFAULT_PRODUCTS, restaurants:restaurants.length?restaurants:DEFAULT_RESTAURANTS, settings, sides:chk(sd) };
     },
     async saveProducts(list){
-      const rows=list.map((p,i)=>({id:p.id,name:p.name,color:p.color,minutes:p.minutes,quantities:p.quantities,active:p.active!==false,sort:i}));
+      const rows=list.map((p,i)=>({id:p.id,name:p.name,color:p.color,minutes:p.minutes,cost:Number(p.cost)||0,quantities:p.quantities,active:p.active!==false,sort:i}));
       chk(await sb.from("products").upsert(rows));
       if (rows.length) chk(await sb.from("products").delete().not("id","in",`(${rows.map(r=>r.id).join(",")})`));
     },
     async saveRestaurants(list){ chk(await sb.from("restaurants").upsert(list.map(r=>({id:r.id,name:r.name,lang:r.lang})))); },
+    async saveSides(list){
+      const rows=list.map((x,i)=>({id:x.id,name:x.name,unit:x.unit,cost:Number(x.cost)||0,active:x.active!==false,sort:i}));
+      if (rows.length) chk(await sb.from("sides").upsert(rows));
+      const del = rows.length ? sb.from("sides").delete().not("id","in",`(${rows.map(r=>r.id).join(",")})`) : sb.from("sides").delete().neq("id","");
+      chk(await del);
+    },
     async saveSettings(s){ chk(await sb.from("settings").upsert(Object.entries(s).map(([key,value])=>({key,value})))); },
     async insertEvents(list){ chk(await sb.from("events").upsert(list,{onConflict:"id",ignoreDuplicates:true})); },
     async fetchEvents(from,to,resto){
@@ -285,7 +371,32 @@ function SupaStore(){
         if (data.length<1000) break;
       }
       return all;
-    }
+    },
+    async fetchAgg(from,to,resto,grain){
+      let all=[];
+      for (let i=0;;i+=1000){
+        const data=chk(await sb.rpc("agg_events",{p_from:from,p_to:to,p_resto:resto||null,p_grain:grain}).order("bucket").order("restaurant_id").order("product_id").order("type").order("reason").order("label").range(i,i+999));
+        all=all.concat(data); if (data.length<1000) break;
+      }
+      return all;
+    },
+    async fetchRecent(from,to,resto,limit){
+      let q=sb.from("events").select("*").gte("created_at",from).lt("created_at",to).order("created_at",{ascending:false}).limit(limit);
+      if (resto) q=q.eq("restaurant_id",resto);
+      return chk(await q);
+    },
+    async listReports(){
+      const out=[];
+      for (const top of ["annees","semaines"]){
+        const dirs=chk(await sb.storage.from("reports").list(top,{limit:200,sortBy:{column:"name",order:"desc"}}));
+        for (const d of dirs.filter(x=>!x.id)){
+          const files=chk(await sb.storage.from("reports").list(`${top}/${d.name}`,{limit:50,sortBy:{column:"name",order:"asc"}}));
+          out.push({kind:top==="annees"?"year":"week",folder:d.name,files:files.filter(f=>f.id).map(f=>({name:f.name,path:`${top}/${d.name}/${f.name}`}))});
+        }
+      }
+      return out;
+    },
+    async reportUrl(path){ return chk(await sb.storage.from("reports").createSignedUrl(path,3600)).signedUrl; }
   };
 }
 
@@ -299,8 +410,9 @@ async function flush(){
   if (flushing || !outbox.length) { updateSync(); return; }
   flushing=true; const batch=outbox.slice();
   try{ await store.insertEvents(batch); const sent=new Set(batch.map(b=>b.id)); outbox=outbox.filter(x=>!sent.has(x.id)); LS.set("dc_outbox",outbox); }
-  catch(e){ /* on réessaie plus tard */ }
-  finally{ flushing=false; updateSync(); }
+  catch(e){ flushing=false; updateSync(); return; /* on réessaie dans 15 s */ }
+  flushing=false; updateSync();
+  if (outbox.length) flush();
 }
 setInterval(flush, 15000);
 function updateSync(){ const el=$("#sync"); if(!el) return; const r=currentResto(); el.textContent = outbox.length ? `${outbox.length} ${tr(r?.lang,"pending")}` : ""; }
@@ -308,7 +420,30 @@ function updateSync(){ const el=$("#sync"); if(!el) return; const r=currentResto
 /* =========================================================
    ÉCRAN CUISINE
    ========================================================= */
-const K = { restoId:LS.get("dc_tablet_resto",null), timers:LS.get("dc_timers",{}), started:false };
+const K = { restoId:LS.get("dc_tablet_resto",null), timers:LS.get("dc_timers",{}), started:false, hist:[] };
+async function loadHistory(){
+  if (!K.restoId) return;
+  try{ const to=new Date(), from=new Date(to.getTime()-29*86400000); K.hist=await store.fetchEvents(from.toISOString(),to.toISOString(),K.restoId); }catch(e){}
+}
+/* Conseil : demande moyenne vendue pendant la durée de maintien, même jour de semaine, 4 dernières semaines */
+function advise(p){
+  const hist=K.hist||[]; if (!hist.length || !p.quantities.length) return null;
+  const now=new Date(), dow=now.getDay(), m0=now.getHours()*60+now.getMinutes(), m1=m0+p.minutes;
+  const days=new Set(); let net=0;
+  for (const e of hist){
+    if (e.product_id!==p.id) continue;
+    const d=new Date(e.created_at); if (d.getDay()!==dow) continue;
+    if (d.toDateString()===now.toDateString()) continue;
+    days.add(d.toDateString());
+    const m=d.getHours()*60+d.getMinutes();
+    if ((e.type==="cook"||e.type==="cancel") && m>=m0 && m<m1) net += (e.type==="cook"?1:-1)*e.pieces;
+    if (e.type==="discard" && m>=m0+p.minutes && m<m1+p.minutes+10) net -= e.pieces;
+  }
+  if (days.size<2) return null;
+  const demand=net/days.size; if (demand<=0.5) return null;
+  const sorted=[...p.quantities].sort((a,b)=>a.pieces-b.pieces);
+  return (sorted.find(q=>q.pieces>=demand*0.9)||sorted[sorted.length-1]).label;
+}
 let kIntervals=[], audio=null, wake=null;
 const currentResto = () => CFG && CFG.restaurants.find(r=>r.id===K.restoId);
 const saveTimers = () => LS.set("dc_timers", K.timers);
@@ -346,11 +481,13 @@ function renderKitchen(){
       h("span",{class:"sp"}),
       h("span",{id:"sync",class:"muted"}),
       h("span",{id:"clock",class:"clock num"}),
+      (CFG.sides||[]).some(x=>x.active!==false) ? h("button",{class:"chip closing-btn",onclick:closingSheet},"🌙 "+L("closing")) : null,
       h("a",{class:"chip",href:"#admin"},"Dashboard")
     ),
     grid));
   tick(); updateSync();
-  kIntervals.push(setInterval(tick,250), setInterval(alarmCheck,1500), setInterval(refreshConfig,60000));
+  kIntervals.push(setInterval(tick,250), setInterval(alarmCheck,1500), setInterval(refreshConfig,60000), setInterval(loadHistory,3600000));
+  if (!K.hist.length) loadHistory();
 }
 
 function startScreen(){
@@ -358,7 +495,7 @@ function startScreen(){
   const lang=()=> (CFG.restaurants.find(r=>r.id===sel.value)||{}).lang||"fr";
   const btn=h("button",{class:"act prim",onclick:()=>{
     K.restoId=sel.value; LS.set("dc_tablet_resto",K.restoId); K.started=true;
-    initAudio(); requestWake();
+    initAudio(); requestWake(); loadHistory();
     try{ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
     renderKitchen();
   }}, tr(lang(),"start"));
@@ -414,9 +551,11 @@ function onTile(p){
   initAudio();
   const r=currentResto(), L=k=>tr(r.lang,k), tm=K.timers[p.id];
   if (!tm){
+    const rec=advise(p);
     openSheet(close=>[
       h("h2",{},p.name), h("p",{class:"sub"},L("qty")),
-      h("div",{class:"qty"}, p.quantities.map(q=>h("button",{class:"big",onclick:()=>{ close(); startBatch(p,q); }},
+      h("div",{class:"qty"}, p.quantities.map(q=>h("button",{class:"big"+(q.label===rec?" rec":""),onclick:()=>{ close(); startBatch(p,q); }},
+        q.label===rec ? h("span",{class:"tag"},"★ "+L("advice")) : null,
         q.label, h("small",{}, q.label===String(q.pieces) ? L("pieces") : q.pieces+" "+L("pieces"))))),
       h("button",{class:"act ghost",onclick:close},L("back"))
     ]);
@@ -437,13 +576,43 @@ function discardSheet(p){
   const out=h("output",{"aria-live":"polite"},"0");
   const set=v=>{ n=Math.max(0,Math.min(max,v)); out.textContent=n; };
   const quick=[...new Set([0,Math.round(max/4),Math.round(max/2),max])];
+  let reason = Date.now()>=tm.end ? "time" : null;
+  const rbox=h("div",{class:"quick reasons"});
+  const drawR=()=>{ rbox.innerHTML=""; REASONS.forEach(k=>rbox.append(h("button",{class:"chip"+(reason===k?" on":""),"data-r":k,onclick:()=>{reason=k;drawR();}},L("r_"+k)))); };
+  drawR();
+  const rwrap=h("div",{class:"rwrap"},h("p",{class:"sub",style:{margin:"4px 0 6px"}},L("reason")),rbox);
   openSheet(close=>[
     h("h2",{},p.name), h("p",{class:"sub"},`${L("how_many")} (max ${max})`),
     h("div",{class:"step"},
       h("button",{"aria-label":"moins",onclick:()=>set(n-1)},"−"), out,
       h("button",{"aria-label":"plus",onclick:()=>set(n+1)},"+")),
     h("div",{class:"quick"}, quick.map(v=>h("button",{class:"chip",onclick:()=>set(v)}, v===0?L("none"):v===max?`${L("all")} (${v})`:v))),
-    h("button",{class:"act prim",onclick:()=>{ close(); endBatch(p,n); }},L("confirm")),
+    rwrap,
+    h("button",{class:"act prim",onclick:()=>{ if(n>0&&!reason){ rwrap.classList.remove("need"); void rwrap.offsetWidth; rwrap.classList.add("need"); return; } close(); endBatch(p,n,reason); }},L("confirm")),
+    h("button",{class:"act ghost",onclick:close},L("back"))
+  ]);
+}
+
+function closingSheet(){
+  const r=currentResto(), L=k=>tr(r.lang,k);
+  const sides=(CFG.sides||[]).filter(x=>x.active!==false);
+  const qty=Object.fromEntries(sides.map(x=>[x.id,0]));
+  const step = u => u==="g" ? 100 : 1;
+  const rows=sides.map(x=>{
+    const out=h("output",{class:"cq"},"0");
+    const set=v=>{ qty[x.id]=Math.max(0,v); out.textContent=qty[x.id]; };
+    return h("div",{class:"crow"},
+      h("div",{class:"cn"},x.name,h("small",{},unitL(r.lang,x.unit))),
+      h("button",{class:"cb","aria-label":"moins "+x.name,onclick:()=>set(qty[x.id]-step(x.unit))},"−"), out,
+      h("button",{class:"cb","aria-label":"plus "+x.name,onclick:()=>set(qty[x.id]+step(x.unit))},"+"));
+  });
+  openSheet(close=>[
+    h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")),
+    h("div",{class:"crows"},rows),
+    h("button",{class:"act prim",onclick:()=>{
+      sides.forEach(x=>{ if(qty[x.id]>0) logEvent(ev("closing",K.restoId,x,x.unit,qty[x.id])); });
+      close(); toast(L("saved"));
+    }},L("confirm")),
     h("button",{class:"act ghost",onclick:close},L("back"))
   ]);
 }
@@ -453,9 +622,11 @@ function startBatch(p,q){
   K.timers[p.id]={label:String(q.label),pieces:q.pieces,start:now,end:now+p.minutes*60000};
   saveTimers(); logEvent(ev("cook",K.restoId,p,q.label,q.pieces)); tick();
 }
-function endBatch(p,discarded){
+function endBatch(p,discarded,reason){
   const tm=K.timers[p.id]; if(!tm) return;
-  if (discarded>0) logEvent(ev("discard",K.restoId,p,tm.label,discarded));
+  const now=Date.now(), late = now>=tm.end ? Math.round((now-tm.end)/1000) : null;
+  if (discarded>0) logEvent(ev("discard",K.restoId,p,tm.label,discarded,null,{reason:reason||"other",late}));
+  else logEvent(ev("close",K.restoId,p,tm.label,0,null,{late}));
   delete K.timers[p.id]; saveTimers(); tick();
 }
 function cancelBatch(p){
@@ -468,12 +639,34 @@ function cancelBatch(p){
    DASHBOARD
    ========================================================= */
 const A = { unlocked:false, tab:"stats", resto:"", period:"today" };
-const PERIODS = { today:"Aujourd'hui", yesterday:"Hier", d7:"7 jours", d30:"30 jours" };
-function periodRange(k){
+const PERIODS = { today:"Aujourd'hui", yesterday:"Hier", d7:"7 jours", d30:"30 jours", month:"Ce mois", year:"Cette année", lastyear:"Année dernière", custom:"Dates…" };
+const todayStr = () => dayKey(new Date());
+if (!A.from){ const d=new Date(); d.setDate(d.getDate()-89); A.from=dayKey(d); A.to=todayStr(); }
+function periodBounds(k){
   const sod=new Date(); sod.setHours(0,0,0,0);
   const add=(d,n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; };
-  const r = k==="yesterday"?[add(sod,-1),sod] : k==="d7"?[add(sod,-6),add(sod,1)] : k==="d30"?[add(sod,-29),add(sod,1)] : [sod,add(sod,1)];
-  return r.map(d=>d.toISOString());
+  const y=sod.getFullYear();
+  switch(k){
+    case "yesterday": return [add(sod,-1),sod];
+    case "d7": return [add(sod,-6),add(sod,1)];
+    case "d30": return [add(sod,-29),add(sod,1)];
+    case "month": return [new Date(y,sod.getMonth(),1),add(sod,1)];
+    case "year": return [new Date(y,0,1),add(sod,1)];
+    case "lastyear": return [new Date(y-1,0,1),new Date(y,0,1)];
+    case "custom": { const f=new Date(A.from+"T00:00:00"), t=add(new Date(A.to+"T00:00:00"),1); return f<t?[f,t]:[t,f]; }
+    default: return [sod,add(sod,1)];
+  }
+}
+function periodRange(k){ return periodBounds(k).map(d=>d.toISOString()); }
+const MONTHS_FR=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+function bucketsFor(from,to){
+  const days=Math.round((to-from)/86400000), out=[];
+  if (days<=62){
+    for (let d=new Date(from); d<to; d.setDate(d.getDate()+1)) out.push({key:dayKey(d),label:d.toLocaleDateString("fr-CH",days<=8?{weekday:"short",day:"numeric"}:{day:"2-digit",month:"2-digit"})});
+    return {grain:"day",buckets:out};
+  }
+  for (let d=new Date(from.getFullYear(),from.getMonth(),1); d<to; d.setMonth(d.getMonth()+1)) out.push({key:dayKey(d).slice(0,7),label:MONTHS_FR[d.getMonth()]+" "+String(d.getFullYear()).slice(2)});
+  return {grain:"month",buckets:out};
 }
 
 function renderAdmin(){
@@ -487,11 +680,12 @@ function renderAdmin(){
   if (store.mode==="demo") wrap.append(h("div",{class:"banner"},"Mode démo : données d'exemple, enregistrées seulement sur cet appareil. Une fois Supabase branché, les 4 restaurants et toutes les tablettes partagent les mêmes données."));
   if (!A.unlocked){ wrap.append(pinScreen()); app.append(wrap); return; }
   wrap.append(h("div",{class:"tabs",role:"tablist"},
-    [["stats","Statistiques"],["timers","Minuteurs"],["settings","Restaurants & réglages"]].map(([k,l])=>
+    [["stats","Statistiques"],["reports","Rapports PDF"],["timers","Minuteurs & fermeture"],["settings","Restaurants & réglages"]].map(([k,l])=>
       h("button",{class:"chip"+(A.tab===k?" on":""),role:"tab","aria-selected":String(A.tab===k),onclick:()=>{A.tab=k;renderAdmin();}},l))));
   const box=h("div",{}); wrap.append(box); app.append(wrap);
   if (A.tab==="stats") statsView(box);
   else if (A.tab==="timers") timersView(box);
+  else if (A.tab==="reports") reportsView(box);
   else settingsView(box);
 }
 
@@ -508,30 +702,44 @@ function pinScreen(){
 }
 
 /* ----- Statistiques ----- */
-function compute(events){
-  const T={batches:0,cooked:0,disc:0}, prod=new Map(), resto=new Map(), days=new Map();
+function compute(rows, hourRows, buckets){
+  const T={batches:0,cooked:0,disc:0,chf:0,closeChf:0}, prod=new Map(), resto=new Map(), reasons={}, closing=new Map();
+  const proc={n:0,sum:0,ontime:0,late5:0};
+  const series=new Map(buckets.map(b=>[b.key,{label:b.label,a:0,b:0}]));
   const hours=Array.from({length:24},()=>({a:0,b:0}));
-  const get=(m,k,init)=>{ if(!m.has(k)) m.set(k,{batches:0,cooked:0,disc:0,...init}); return m.get(k); };
-  for (const e of events){
+  const get=(m,k,init)=>{ if(!m.has(k)) m.set(k,{batches:0,cooked:0,disc:0,chf:0,...init}); return m.get(k); };
+  for (const e of rows){
+    const n=Number(e.n), pc=Number(e.pieces);
+    if (e.type==="closing"){
+      const sd=(CFG.sides||[]).find(x=>x.id===e.product_id), k=e.product_id+"|"+e.label;
+      if (!closing.has(k)) closing.set(k,{name:sd?sd.name:e.product_name,unit:e.label,qty:0,chf:0,n:0});
+      const c=closing.get(k), cc=pc*(Number(sd&&sd.cost)||0)/(e.label==="g"?100:1);
+      c.qty+=pc; c.chf+=cc; c.n+=n; T.closeChf+=cc;
+      continue;
+    }
     const p=prodById(e.product_id), r=CFG.restaurants.find(x=>x.id===e.restaurant_id);
     const P=get(prod,e.product_id,{name:p?p.name:e.product_name,color:p?p.color:"#777"});
-    const R=get(resto,e.restaurant_id,{name:r?r.name:e.restaurant_id});
-    const d=new Date(e.created_at);
-    const dk=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-    const D=get(days,dk,{label:d.toLocaleDateString("fr-CH",{weekday:"short",day:"2-digit",month:"2-digit"})});
-    const H=hours[d.getHours()];
+    const Rr=get(resto,e.restaurant_id,{name:r?r.name:e.restaurant_id});
+    const S=series.get(e.bucket);
     if (e.type==="cook"||e.type==="cancel"){
-      const s=e.type==="cancel"?-1:1;
-      [T,P,R,D].forEach(o=>{ o.batches+=s; o.cooked+=s*e.pieces; }); H.a+=s*e.pieces;
+      const sg=e.type==="cancel"?-1:1;
+      [T,P,Rr].forEach(o=>{ o.batches+=sg*n; o.cooked+=sg*pc; }); if (S) S.a+=sg*pc;
     } else if (e.type==="discard"){
-      [T,P,R,D].forEach(o=>{ o.disc+=e.pieces; }); H.b+=e.pieces;
+      const c=pc*(Number(p&&p.cost)||0);
+      [T,P,Rr].forEach(o=>{ o.disc+=pc; o.chf+=c; }); if (S) S.b+=pc;
+      const rk=e.reason||"other"; reasons[rk]=(reasons[rk]||0)+pc;
     }
+    if (e.type==="discard"||e.type==="close"){ proc.n+=Number(e.late_n); proc.sum+=Number(e.late_sum); proc.ontime+=Number(e.late_ontime); proc.late5+=Number(e.late5); }
+  }
+  for (const e of hourRows){
+    const H=hours[Number(e.bucket)]; if(!H) continue;
+    if (e.type==="cook") H.a+=Number(e.pieces); else if (e.type==="cancel") H.a-=Number(e.pieces); else if (e.type==="discard") H.b+=Number(e.pieces);
   }
   const order=new Map(CFG.products.map((p,i)=>[p.id,i]));
-  return { T,
+  return { T, reasons, proc, closing:[...closing.values()],
     prod:[...prod.entries()].sort((a,b)=>(order.get(a[0])??99)-(order.get(b[0])??99)).map(x=>x[1]),
     resto:[...resto.values()].sort((a,b)=>a.name.localeCompare(b.name)),
-    days:[...days.entries()].sort((a,b)=>a[0]<b[0]?-1:1).map(([,v])=>({label:v.label,a:v.cooked,b:v.disc})),
+    series:[...series.values()],
     hours:hours.map((v,i)=>({label:i+"h",a:v.a,b:v.b})) };
 }
 const lossPct = o => o.cooked>0 ? (100*o.disc/o.cooked).toFixed(1)+" %" : "–";
@@ -556,32 +764,61 @@ function table(cols, rows){
 }
 
 async function statsView(box){
-  box.append(h("div",{class:"filters"},
+  box.append(...[h("div",{class:"filters"},
     h("select",{id:"f-resto","aria-label":"Restaurant",onchange:e=>{A.resto=e.target.value;renderAdmin();}},
       h("option",{value:"",selected:A.resto===""},"Tous les restaurants"),
       CFG.restaurants.map(r=>h("option",{value:r.id,selected:A.resto===r.id},r.name))),
-    Object.entries(PERIODS).map(([k,l])=>h("button",{class:"chip"+(A.period===k?" on":""),onclick:()=>{A.period=k;renderAdmin();}},l))));
+    Object.entries(PERIODS).map(([k,l])=>h("button",{class:"chip"+(A.period===k?" on":""),onclick:()=>{A.period=k;renderAdmin();}},l))),
+    A.period==="custom" ? h("div",{class:"filters custom"},
+      h("label",{class:"f",for:"f-from"},"Du",h("input",{id:"f-from",type:"date",value:A.from,max:todayStr(),onchange:e=>{if(e.target.value){A.from=e.target.value;renderAdmin();}}})),
+      h("label",{class:"f",for:"f-to"},"Au",h("input",{id:"f-to",type:"date",value:A.to,max:todayStr(),onchange:e=>{if(e.target.value){A.to=e.target.value;renderAdmin();}}}))) : null].filter(Boolean));
   const res=h("div",{class:"empty"},"Chargement…"); box.append(res);
-  const [from,to]=periodRange(A.period);
-  let events;
-  try{ events=await store.fetchEvents(from,to,A.resto||null); }
+  const [fromD,toD]=periodBounds(A.period), from=fromD.toISOString(), to=toD.toISOString();
+  const B=bucketsFor(fromD,toD);
+  let rows, hrows, recent;
+  try{ [rows,hrows,recent]=await Promise.all([store.fetchAgg(from,to,A.resto||null,B.grain), store.fetchAgg(from,to,A.resto||null,"hour"), store.fetchRecent(from,to,A.resto||null,60)]); }
   catch(e){ res.textContent="Impossible de charger les données : "+(e.message||e)+". Vérifie la connexion internet."; return; }
-  if (!events.length){ res.textContent="Aucune donnée sur cette période. Les chiffres apparaissent dès qu'un cuisinier lance un minuteur."; return; }
+  if (!rows.length){ res.textContent="Aucune donnée sur cette période. Les chiffres apparaissent dès qu'un cuisinier lance un minuteur."; return; }
   res.className=""; res.innerHTML="";
-  const S=compute(events), sold=S.T.cooked-S.T.disc;
+  const S=compute(rows,hrows,B.buckets), sold=S.T.cooked-S.T.disc;
+  const totalActions=rows.reduce((a,r)=>a+Number(r.n),0);
   res.append(h("div",{class:"kpis"},
     h("div",{class:"kpi"},h("div",{class:"l"},"Fournées lancées"),h("div",{class:"v"},fmt(S.T.batches))),
     h("div",{class:"kpi"},h("div",{class:"l"},"Pièces cuites"),h("div",{class:"v"},fmt(S.T.cooked))),
     h("div",{class:"kpi sold"},h("div",{class:"l"},"Pièces vendues"),h("div",{class:"v"},fmt(sold)),h("div",{class:"h"},"cuites − jetées")),
     h("div",{class:"kpi loss"},h("div",{class:"l"},"Pièces jetées"),h("div",{class:"v"},fmt(S.T.disc))),
-    h("div",{class:"kpi loss"},h("div",{class:"l"},"Taux de perte"),h("div",{class:"v"},lossPct(S.T)))));
+    h("div",{class:"kpi loss"},h("div",{class:"l"},"Taux de perte"),h("div",{class:"v"},lossPct(S.T))),
+    h("div",{class:"kpi loss money"},h("div",{class:"l"},"Perte totale en CHF"),h("div",{class:"v"},CHF(S.T.chf+S.T.closeChf)),
+      CFG.products.some(p=>Number(p.cost)>0)
+        ? h("div",{class:"h"},`poulet ${CHF(S.T.chf)} · fermeture ${CHF(S.T.closeChf)}`)
+        : h("div",{class:"h"},"Indique les coûts dans Minuteurs"))));
 
   res.append(h("section",{class:"blk"},h("h3",{},"Par produit"),
-    table(["Produit","Fournées","Cuites","Jetées","Vendues","Perte"],
+    table(["Produit","Fournées","Cuites","Jetées","Vendues","Perte","Perte CHF"],
       S.prod.map(o=>h("tr",{},
         h("td",{},h("i",{class:"dot",style:{background:o.color}}),o.name),
         h("td",{},fmt(o.batches)),h("td",{},fmt(o.cooked)),h("td",{},fmt(o.disc)),
-        h("td",{},fmt(o.cooked-o.disc)),h("td",{class:"loss"},lossPct(o)))))));
+        h("td",{},fmt(o.cooked-o.disc)),h("td",{class:"loss"},lossPct(o)),h("td",{class:"loss"},CHF(o.chf)))))));
+
+  res.append(h("section",{class:"blk"},h("h3",{},"Pertes à la fermeture"),
+    S.closing.length ? table(["Accompagnement","Fermetures","Quantité jetée","Perte CHF"],
+      S.closing.sort((a,b)=>b.chf-a.chf||b.qty-a.qty).map(c=>h("tr",{},h("td",{},c.name),h("td",{},fmt(c.n)),h("td",{},`${fmt(c.qty)} ${c.unit==="g"?"g":c.unit}`),h("td",{class:"loss"},CHF(c.chf)))))
+    : h("div",{class:"empty"},"Rien n'a été saisi en fin de service sur cette période.")));
+
+  const rTot=Object.values(S.reasons).reduce((a,b)=>a+b,0);
+  if (rTot) res.append(h("section",{class:"blk"},h("h3",{},"Pourquoi on jette"),
+    h("div",{class:"panel"}, REASONS.filter(k=>S.reasons[k]).sort((a,b)=>S.reasons[b]-S.reasons[a]).map(k=>
+      h("div",{class:"hbar"},h("span",{},REASON_FR[k]),h("div",{class:"tr"},h("i",{style:{width:(100*S.reasons[k]/rTot)+"%"}})),
+        h("b",{},`${fmt(S.reasons[k])} pièces · ${Math.round(100*S.reasons[k]/rTot)} %`))))));
+
+  const P=S.proc;
+  res.append(h("section",{class:"blk"},h("h3",{},"Respect de la procédure"),
+    P.n ? h("div",{class:"kpis",style:{"margin-bottom":"0"}},
+      h("div",{class:"kpi"},h("div",{class:"l"},"Minuteurs arrivés à zéro"),h("div",{class:"v"},fmt(P.n))),
+      h("div",{class:"kpi"},h("div",{class:"l"},"Réaction moyenne"),h("div",{class:"v"},mmssS(P.sum/P.n)),h("div",{class:"h"},"min:s après l'alarme")),
+      h("div",{class:"kpi "+(P.ontime/P.n>=0.8?"ok":"loss")},h("div",{class:"l"},"Traités en moins de 2 min"),h("div",{class:"v"},Math.round(100*P.ontime/P.n)+" %")),
+      h("div",{class:"kpi "+(P.late5?"loss":"ok")},h("div",{class:"l"},"Plus de 5 min de retard"),h("div",{class:"v"},fmt(P.late5))))
+    : h("div",{class:"empty"},"Pas encore de minuteur arrivé à zéro sur cette période.")));
 
   if (!A.resto && S.resto.length>1){
     res.append(h("section",{class:"blk"},h("h3",{},"Par restaurant"),
@@ -591,30 +828,31 @@ async function statsView(box){
 
   const used=S.hours.map((b,i)=>(b.a||b.b)?i:-1).filter(i=>i>=0);
   if (used.length) res.append(h("section",{class:"blk"},h("h3",{},"Par heure"),chart(S.hours.slice(Math.min(...used),Math.max(...used)+1))));
-  if (S.days.length>1) res.append(h("section",{class:"blk"},h("h3",{},"Par jour"),chart(S.days)));
+  if (S.series.length>1) res.append(h("section",{class:"blk"},h("h3",{},B.grain==="month"?"Par mois":"Par jour"),chart(S.series)));
 
-  const label={cook:"Lancé",discard:"Jeté",cancel:"Annulé"};
-  const recent=events.slice(-60).reverse();
+  const label={cook:"Lancé",discard:"Jeté",cancel:"Annulé",close:"Clôturé",closing:"Fermeture"};
+
   const head=h("div",{class:"row-act",style:{"justify-content":"space-between","margin-bottom":"10px"}},h("h3",{style:{margin:"0"}},"Journal des actions"));
-  if (!inFrame) head.append(h("button",{class:"btn",onclick:()=>exportCSV(events)},"Exporter CSV"));
+  if (!inFrame) head.append(h("button",{class:"btn",onclick:async e=>{ const b=e.currentTarget; b.disabled=true; b.textContent="Préparation…"; try{ exportCSV(await store.fetchEvents(from,to,A.resto||null)); }catch(err){ toast("Export impossible : "+(err.message||err)); } b.disabled=false; b.textContent="Exporter CSV"; }},"Exporter CSV"));
   res.append(h("section",{class:"blk"},head,
     h("div",{class:"tw"}, h("table",{},
-      h("thead",{},h("tr",{},["Date & heure","Restaurant","Produit","Action","Quantité","Pièces"].map((c,i)=>h("th",{class:i<4?"l":""},c)))),
+      h("thead",{},h("tr",{},["Date & heure","Restaurant","Produit","Action","Quantité","Pièces","Détail"].map((c,i)=>h("th",{class:i<4||i===6?"l":""},c)))),
       h("tbody",{},
       recent.map(e=>{ const d=new Date(e.created_at), r=CFG.restaurants.find(x=>x.id===e.restaurant_id);
         return h("tr",{},
           h("td",{},d.toLocaleString("fr-CH",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})),
           h("td",{class:"l"},r?r.name:e.restaurant_id), h("td",{class:"l"},e.product_name),
           h("td",{class:"l"},h("span",{class:"pill p-"+e.type},label[e.type]||e.type)),
-          h("td",{},e.label), h("td",{},fmt(e.pieces))); })))),
-    events.length>60 ? h("p",{class:"muted"},`60 dernières actions affichées sur ${fmt(events.length)}.`) : null));
+          h("td",{},e.label), h("td",{},fmt(e.pieces)),
+          h("td",{class:"l muted"},[e.reason?REASON_FR[e.reason]:null, e.late_seconds!=null?"réaction "+mmssS(e.late_seconds):null].filter(Boolean).join(" · "))); })))),
+    totalActions>60 ? h("p",{class:"muted"},`60 dernières actions affichées sur ${fmt(totalActions)}.`) : null));
 }
 
 function exportCSV(events){
-  const label={cook:"lance",discard:"jete",cancel:"annule"};
-  const rows=[["date","heure","restaurant","produit","action","quantite","pieces"]].concat(events.map(e=>{
+  const label={cook:"lance",discard:"jete",cancel:"annule",close:"cloture",closing:"fermeture"};
+  const rows=[["date","heure","restaurant","produit","action","quantite","pieces","raison","reaction_secondes"]].concat(events.map(e=>{
     const d=new Date(e.created_at), r=CFG.restaurants.find(x=>x.id===e.restaurant_id);
-    return [d.toLocaleDateString("fr-CH"),d.toLocaleTimeString("fr-CH"),r?r.name:e.restaurant_id,e.product_name,label[e.type]||e.type,e.label,e.pieces];
+    return [d.toLocaleDateString("fr-CH"),d.toLocaleTimeString("fr-CH"),r?r.name:e.restaurant_id,e.product_name,label[e.type]||e.type,e.label,e.pieces,e.reason?REASON_FR[e.reason]:"",e.late_seconds??""];
   }));
   const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n");
   const a=h("a",{href:URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"})),download:"kitchen-chic-chicken.csv"});
@@ -630,6 +868,37 @@ function parseQ(s){
     const n=parseInt(parts[0],10); return n>0?{label:String(n),pieces:n}:null;
   });
 }
+function sidesEditor(){
+  const draft=JSON.parse(JSON.stringify(CFG.sides||[]));
+  const list=h("div",{class:"cards"});
+  const draw=()=>{
+    list.innerHTML="";
+    draft.forEach((x,i)=>list.append(h("div",{class:"card"},
+      h("label",{class:"f",for:"sn"+i},"Nom",h("input",{id:"sn"+i,value:x.name,oninput:e=>x.name=e.target.value})),
+      h("div",{class:"row-act"},
+        h("label",{class:"f",for:"su"+i,style:{flex:"1"}},"Unité",h("select",{id:"su"+i,onchange:e=>{x.unit=e.target.value;draw();}},
+          [["portions","Portions"],["g","Grammes"],["pièces","Pièces"]].map(([v,l])=>h("option",{value:v,selected:x.unit===v},l)))),
+        h("label",{class:"f",for:"sc"+i,style:{flex:"1"}},x.unit==="g"?"CHF / 100 g":x.unit==="pièces"?"CHF / pièce":"CHF / portion",
+          h("input",{id:"sc"+i,type:"number",min:"0",step:"0.05",inputmode:"decimal",value:x.cost??0,oninput:e=>x.cost=parseFloat(e.target.value)||0}))),
+      h("div",{class:"row-act"},
+        h("label",{class:"chk"},h("input",{type:"checkbox",checked:x.active!==false,onchange:e=>x.active=e.target.checked}),"Visible"),
+        h("span",{style:{flex:"1"}}),
+        h("button",{class:"btn dang",onclick:()=>{draft.splice(i,1);draw();}},"Supprimer")))));
+  };
+  draw();
+  return h("section",{class:"blk",style:{"margin-top":"28px"}},
+    h("h3",{},"Pertes à la fermeture"),
+    h("p",{class:"muted",style:{"margin-top":"0"}},"Ce que le cuisinier saisit avec le bouton « Fin de service »."),
+    list,
+    h("div",{class:"row-act"},
+      h("button",{class:"btn",onclick:()=>{draft.push({id:"s_"+Date.now().toString(36),name:"Nouvel accompagnement",unit:"portions",cost:0,active:true});draw();}},"+ Ajouter"),
+      h("button",{class:"btn prim",onclick:async()=>{
+        if (draft.some(x=>!x.name.trim())){ toast("Chaque accompagnement doit avoir un nom"); return; }
+        try{ await store.saveSides(draft); CFG.sides=JSON.parse(JSON.stringify(draft)); LS.set("dc_cfg",CFG); toast("Accompagnements enregistrés"); }
+        catch(e){ toast("Échec de l'enregistrement : "+(e.message||e)); }
+      }},"Enregistrer les accompagnements")));
+}
+
 function timersView(box){
   const draft=JSON.parse(JSON.stringify(CFG.products));
   const list=h("div",{class:"prods"});
@@ -642,6 +911,7 @@ function timersView(box){
       list.append(h("div",{class:"prow",style:{"--c":p.color}},
         h("label",{class:"f",for:"pn"+i},"Nom du minuteur",h("input",{id:"pn"+i,value:p.name,oninput:e=>p.name=e.target.value})),
         h("label",{class:"f",for:"pm"+i},"Minutes au bain-marie",h("input",{id:"pm"+i,type:"number",min:"1",max:"240",inputmode:"numeric",value:p.minutes,oninput:e=>p.minutes=parseInt(e.target.value,10)||0})),
+        h("label",{class:"f",for:"pc"+i},"Coût par pièce (CHF)",h("input",{id:"pc"+i,type:"number",min:"0",step:"0.05",inputmode:"decimal",value:p.cost??0,oninput:e=>p.cost=parseFloat(e.target.value)||0})),
         h("label",{class:"f wide",for:"pq"+i},h("span",{},"Boutons quantité ",h("span",{class:"hint"},"— ex : 10, 20, 30  ou  ¼=9, ½=18, ¾=27, Complète=36")),
           h("input",{id:"pq"+i,value:qToText(p.quantities),oninput:e=>p._q=e.target.value})),
         h("div",{class:"wide sw-wrap"},h("div",{class:"f",style:{"margin-bottom":"6px"}},"Couleur du carré"),sw),
@@ -658,7 +928,7 @@ function timersView(box){
     h("p",{class:"muted",style:{"margin-top":"0"}},"Les tablettes récupèrent les changements dans la minute."),
     list,
     h("div",{class:"row-act"},
-      h("button",{class:"btn",onclick:()=>{draft.push({id:"p_"+Date.now().toString(36),name:"Nouveau minuteur",color:PRESETS[draft.length%PRESETS.length],minutes:20,active:true,quantities:[{label:"10",pieces:10}]});draw();}},"+ Ajouter un minuteur"),
+      h("button",{class:"btn",onclick:()=>{draft.push({id:"p_"+Date.now().toString(36),name:"Nouveau minuteur",color:PRESETS[draft.length%PRESETS.length],minutes:20,cost:0,active:true,quantities:[{label:"10",pieces:10}]});draw();}},"+ Ajouter un minuteur"),
       h("button",{class:"btn prim",onclick:async()=>{
         for (const p of draft){
           if (p._q!==undefined){ const q=parseQ(p._q); if(q.some(x=>!x)||!q.length){ toast(`« ${p.name} » : boutons quantité invalides`); return; } p.quantities=q; delete p._q; }
@@ -667,7 +937,8 @@ function timersView(box){
         }
         try{ await store.saveProducts(draft); CFG.products=JSON.parse(JSON.stringify(draft)); LS.set("dc_cfg",CFG); toast("Minuteurs enregistrés"); renderAdmin(); }
         catch(e){ toast("Échec de l'enregistrement : "+(e.message||e)); }
-      }},"Enregistrer")));
+      }},"Enregistrer")),
+    sidesEditor());
 }
 
 /* ----- Restaurants & réglages ----- */
@@ -684,14 +955,58 @@ function settingsView(box){
         h("label",{class:"f",for:"s-pin"},"Code PIN du dashboard",h("input",{id:"s-pin",inputmode:"numeric",value:sd.pin,oninput:e=>sd.pin=e.target.value.trim()}))),
       h("div",{class:"card"},
         h("label",{class:"f",for:"s-vol"},"Volume de l'alarme",h("input",{id:"s-vol",type:"range",min:"0.1",max:"1",step:"0.1",value:sd.volume,oninput:e=>sd.volume=parseFloat(e.target.value)})),
-        h("button",{class:"btn",onclick:()=>{ initAudio(); const old=CFG.settings.volume; CFG.settings.volume=sd.volume; beep(); CFG.settings.volume=old; }},"Tester l'alarme"))),
+        h("button",{class:"btn",onclick:()=>{ initAudio(); const old=CFG.settings.volume; CFG.settings.volume=sd.volume; beep(); CFG.settings.volume=old; }},"Tester l'alarme")),
+      h("div",{class:"card",style:{"grid-column":"1/-1"}},
+        h("label",{class:"f",for:"s-mails"},h("span",{},"Rapports PDF (lundi 7h30 + 1er janvier) ",h("span",{class:"hint"},"— adresses séparées par des virgules")),
+          h("input",{id:"s-mails",type:"text",inputmode:"email",value:(sd.report_emails||[]).join(", "),oninput:e=>sd.report_emails=e.target.value.split(",").map(x=>x.trim()).filter(Boolean)})),
+        h("p",{class:"muted",style:{margin:"0"}},"Chaque lundi : un PDF par restaurant avec la semaine passée (ventes, pertes en CHF, raisons, respect de la procédure)."),
+        store.mode==="supabase" ? h("button",{class:"btn",style:{"align-self":"flex-start"},onclick:e=>sendReportNow(e,"week")},"Envoyer le rapport de la semaine maintenant") : null)),
     h("div",{class:"row-act"},
       h("button",{class:"btn prim",onclick:async()=>{
         if (!/^\d{4,8}$/.test(sd.pin)){ toast("Le PIN doit faire 4 à 8 chiffres"); return; }
-        try{ await store.saveRestaurants(rd); await store.saveSettings({pin:sd.pin,volume:sd.volume}); CFG.restaurants=rd; CFG.settings=sd; LS.set("dc_cfg",CFG); toast("Réglages enregistrés"); }
+        const bad=(sd.report_emails||[]).find(m=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)); if (bad){ toast("Adresse e-mail invalide : "+bad); return; }
+        try{ await store.saveRestaurants(rd); await store.saveSettings({pin:sd.pin,volume:sd.volume,report_emails:sd.report_emails||[]}); CFG.restaurants=rd; CFG.settings=sd; LS.set("dc_cfg",CFG); toast("Réglages enregistrés"); }
         catch(e){ toast("Échec de l'enregistrement : "+(e.message||e)); }
       }},"Enregistrer"),
       store.mode==="demo" ? h("button",{class:"btn dang",onclick:async()=>{ await store.clearEvents(); toast("Données d'exemple effacées"); }},"Effacer les données d'exemple") : null));
+}
+
+async function reportsView(box){
+  box.append(h("p",{class:"muted",style:{"margin-top":"0"}},"Chaque lundi à 7h30, le rapport de la semaine passée (un PDF par restaurant). Chaque 1er janvier, le rapport de l'année complète (total + un PDF par restaurant). Tous les PDF sont gardés ici."));
+  if (store.mode!=="supabase"){ box.append(h("div",{class:"empty"},"Les rapports PDF sont disponibles une fois l'app reliée à la base de données.")); return; }
+  box.append(h("div",{class:"row-act",style:{"margin-bottom":"16px"}},
+    h("button",{class:"btn prim",onclick:e=>sendReportNow(e,"week")},"Générer la semaine dernière"),
+    h("button",{class:"btn",onclick:e=>sendReportNow(e,"year")},`Générer l'année ${new Date().getFullYear()-1}`)));
+  const list=h("div",{class:"empty"},"Chargement…"); box.append(list);
+  let groups;
+  try{ groups=await store.listReports(); }catch(e){ list.textContent="Impossible de charger les rapports : "+(e.message||e); return; }
+  if (!groups.length){ list.textContent="Aucun rapport pour l'instant. Le premier arrivera lundi prochain à 7h30."; return; }
+  list.className="cards"; list.innerHTML="";
+  const fmtFolder=g=> g.kind==="year" ? `Année ${g.folder}` : `Semaine du ${g.folder.split("-").reverse().join(".")}`;
+  groups.forEach(g=>list.append(h("div",{class:"card"},
+    h("div",{class:"row-act",style:{"justify-content":"space-between"}},
+      h("strong",{style:{"font-family":"var(--f-display)","font-size":"22px","text-transform":"uppercase"}},fmtFolder(g)),
+      h("span",{class:"pill "+(g.kind==="year"?"p-cook":"p-closing")},g.kind==="year"?"Annuel":"Hebdo")),
+    h("div",{style:{display:"flex","flex-direction":"column",gap:"6px"}}, g.files.map(f=>{
+      const label=f.name.replace(/^Kitchen-Chic-Chicken_(Semaine|Annuel)-[\d-]+_/,"").replace(/\.pdf$/,"").replace(/-/g," ");
+      return h("button",{class:"btn",style:{"text-align":"left"},onclick:async e=>{
+        const b=e.currentTarget, old=b.textContent; b.textContent="Ouverture…";
+        try{ const url=await store.reportUrl(f.path); const a=h("a",{href:url,target:"_blank",rel:"noopener"}); document.body.append(a); a.click(); a.remove(); }
+        catch(err){ toast("Impossible d'ouvrir le PDF"); }
+        b.textContent=old;
+      }},"📄 "+label);
+    })))));
+}
+
+async function sendReportNow(e,kind){
+  const b=e.currentTarget, old=b.textContent; b.disabled=true; b.textContent="Génération en cours…";
+  try{
+    const r=await fetch(CONFIG.SUPABASE_URL+"/functions/v1/weekly-report",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+CONFIG.SUPABASE_ANON_KEY,apikey:CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify({mode:"manual",kind:kind==="year"?"year":"week"})});
+    const j=await r.json().catch(()=>({}));
+    toast(!r.ok ? (j.error||"Échec de l'envoi") : j.emailed ? `PDF archivés et envoyés à ${(j.to||[]).join(", ")}` : (j.warning||"PDF archivés"));
+    if (r.ok && A.tab==="reports") renderAdmin();
+  }catch(err){ toast("Échec de l'envoi : vérifie la connexion"); }
+  b.disabled=false; b.textContent=old;
 }
 
 /* ---------- Démarrage ---------- */
@@ -703,7 +1018,8 @@ window.addEventListener("hashchange", route);
 (async function init(){
   store = (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && window.supabase) ? SupaStore() : LocalStore();
   try{ CFG=await store.loadConfig(); LS.set("dc_cfg",CFG); }
-  catch(e){ CFG=LS.get("dc_cfg",null)||{products:DEFAULT_PRODUCTS,restaurants:DEFAULT_RESTAURANTS,settings:{...DEFAULT_SETTINGS}}; toast("Hors connexion : dernière configuration utilisée"); }
+  catch(e){ CFG=LS.get("dc_cfg",null)||{products:DEFAULT_PRODUCTS,restaurants:DEFAULT_RESTAURANTS,settings:{...DEFAULT_SETTINGS},sides:DEFAULT_SIDES}; toast("Hors connexion : dernière configuration utilisée"); }
+  CFG.sides = CFG.sides || [];
   route(); flush();
 })();
 </script>
