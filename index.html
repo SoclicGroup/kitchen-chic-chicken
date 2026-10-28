@@ -81,6 +81,15 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .cn small{display:block;font-family:var(--f-body);font-size:13px;font-weight:600;color:var(--muted);text-transform:none;margin-top:4px}
 .cb{width:64px;height:64px;border-radius:50%;border:0;background:var(--surface);font-size:34px;font-weight:700;touch-action:manipulation}
 .cq{font-family:var(--f-display);font-weight:800;font-size:44px;text-align:center;font-variant-numeric:tabular-nums}
+.devs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.dev{background:var(--surface);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px;border-left:5px solid var(--muted)}
+.dev.ok{border-left-color:var(--ok)}.dev.idle{border-left-color:#F5B83D}.dev.off{border-left-color:var(--danger)}
+.dev-top{display:flex;align-items:center;gap:8px}.dev-top strong{font-size:16px}
+.dev .st{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.dev.ok .st{background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 25%,transparent)}.dev.idle .st{background:#F5B83D}.dev.off .st{background:var(--danger)}
+.dev-st{font-weight:700}.dev.off .dev-st{color:var(--danger-text)}.dev.ok .dev-st{color:var(--ok)}
+.dev-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}.dev-meta .bad{color:var(--danger-text);font-weight:700}
+.alert{background:color-mix(in srgb,var(--danger) 18%,var(--surface));border:1px solid var(--danger);color:var(--fg);border-radius:12px;padding:12px 14px;font-weight:700;margin-bottom:10px}
 .big.rec{box-shadow:inset 0 0 0 3px var(--accent);position:relative}
 .big .tag{font-family:var(--f-body);font-size:12px;font-weight:700;color:var(--accent-ink);background:var(--accent);border-radius:999px;padding:2px 8px;margin-bottom:6px;letter-spacing:.02em}
 .rwrap.need{animation:need .5s}
@@ -329,6 +338,10 @@ function LocalStore(){
     async fetchAgg(from,to,resto,grain){ return aggLocal(await this.fetchEvents(from,to,resto),grain); },
     async fetchRecent(from,to,resto,limit){ return (await this.fetchEvents(from,to,resto)).slice(-limit).reverse(); },
     async listReports(){ return null; },
+    async heartbeat(d){ const all=LS.get("dc_devices",{}); all[d.id]={...(all[d.id]||{}),...d}; LS.set("dc_devices",all); },
+    async listDevices(){ return Object.values(LS.get("dc_devices",{})); },
+    async renameDevice(id,label){ const all=LS.get("dc_devices",{}); if(all[id]) all[id].label=label; LS.set("dc_devices",all); },
+    async deleteDevice(id){ const all=LS.get("dc_devices",{}); delete all[id]; LS.set("dc_devices",all); },
     async clearEvents(){ events=[]; LS.set("dc_events",events); }
   };
 }
@@ -396,6 +409,10 @@ function SupaStore(){
       }
       return out;
     },
+    async heartbeat(d){ chk(await sb.from("devices").upsert(d)); },
+    async listDevices(){ return chk(await sb.from("devices").select("*").order("restaurant_id")); },
+    async renameDevice(id,label){ chk(await sb.from("devices").update({label}).eq("id",id)); },
+    async deleteDevice(id){ chk(await sb.from("devices").delete().eq("id",id)); },
     async reportUrl(path){ return chk(await sb.storage.from("reports").createSignedUrl(path,3600)).signedUrl; }
   };
 }
@@ -416,6 +433,16 @@ async function flush(){
 }
 setInterval(flush, 15000);
 function updateSync(){ const el=$("#sync"); if(!el) return; const r=currentResto(); el.textContent = outbox.length ? `${outbox.length} ${tr(r?.lang,"pending")}` : ""; }
+
+/* ---------- Présence des tablettes ---------- */
+const DEVICE_ID = (()=>{ let d=LS.get("dc_device",null); if(!d){ d=uid(); LS.set("dc_device",d); } return d; })();
+async function heartbeat(){
+  if (!store || !K.restoId || location.hash==="#admin") return;
+  let battery=null, charging=null;
+  try{ if (navigator.getBattery){ const b=await navigator.getBattery(); battery=Math.round(b.level*100); charging=!!b.charging; } }catch(e){}
+  try{ await store.heartbeat({id:DEVICE_ID,restaurant_id:K.restoId,last_seen:new Date().toISOString(),in_service:!!K.started,pending:outbox.length,battery,charging,user_agent:navigator.userAgent.slice(0,200)}); }catch(e){}
+}
+setInterval(heartbeat, 60000);
 
 /* =========================================================
    ÉCRAN CUISINE
@@ -495,7 +522,7 @@ function startScreen(){
   const lang=()=> (CFG.restaurants.find(r=>r.id===sel.value)||{}).lang||"fr";
   const btn=h("button",{class:"act prim",onclick:()=>{
     K.restoId=sel.value; LS.set("dc_tablet_resto",K.restoId); K.started=true;
-    initAudio(); requestWake(); loadHistory();
+    initAudio(); requestWake(); loadHistory(); heartbeat();
     try{ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
     renderKitchen();
   }}, tr(lang(),"start"));
@@ -763,7 +790,41 @@ function table(cols, rows){
     h("tbody",{},rows)));
 }
 
+const devName = d => d.label || ("Tablette "+String(d.id).slice(0,4).toUpperCase());
+function devState(d){
+  const min=(Date.now()-new Date(d.last_seen).getTime())/60000;
+  if (min>=3) return {k:"off", t: min<60 ? `Hors ligne depuis ${Math.round(min)} min` : min<1440 ? `Hors ligne depuis ${Math.round(min/60)} h` : `Hors ligne depuis ${Math.round(min/1440)} j`};
+  return d.in_service ? {k:"ok",t:"En service"} : {k:"idle",t:"Allumée · service non démarré"};
+}
+function devicesPanel(){
+  const wrap=h("section",{class:"blk devs-wrap"});
+  (async()=>{
+    let list; try{ list=await store.listDevices(); }catch(e){ return; }
+    if (A.resto) list=list.filter(d=>d.restaurant_id===A.resto);
+    if (!list.length){ wrap.append(h("div",{class:"empty"},"Aucune tablette n'a encore démarré l'écran cuisine.")); return; }
+    const off=list.filter(d=>devState(d).k==="off");
+    if (off.length) wrap.append(h("div",{class:"alert"},`⚠ ${off.length} tablette${off.length>1?"s":""} hors ligne : ${off.map(d=>`${devName(d)} (${(CFG.restaurants.find(r=>r.id===d.restaurant_id)||{}).name||"?"})`).join(", ")}`));
+    wrap.append(h("div",{class:"devs"}, list.map(d=>{
+      const st=devState(d), r=CFG.restaurants.find(x=>x.id===d.restaurant_id);
+      const lowBat = d.battery!=null && d.battery<20 && !d.charging;
+      return h("div",{class:"dev "+st.k},
+        h("div",{class:"dev-top"},h("i",{class:"st"}),h("strong",{},devName(d))),
+        h("div",{class:"muted"},r?r.name:"Restaurant inconnu"),
+        h("div",{class:"dev-st"},st.t),
+        h("div",{class:"dev-meta"},
+          d.battery!=null ? h("span",{class:lowBat?"bad":""},`🔋 ${d.battery} %${d.charging?" ⚡":""}`) : null,
+          d.pending>0 ? h("span",{class:"bad"},`${d.pending} action${d.pending>1?"s":""} en attente`) : null,
+          h("span",{},"vue à "+new Date(d.last_seen).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"}))));
+    })));
+  })();
+  return wrap;
+}
+
 async function statsView(box){
+  box.append(h("div",{class:"row-act",style:{"justify-content":"space-between","margin-bottom":"10px"}},
+    h("h3",{style:{margin:"0","font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px"}},"Tablettes"),
+    h("button",{class:"btn",onclick:()=>renderAdmin()},"Actualiser")));
+  box.append(devicesPanel());
   box.append(...[h("div",{class:"filters"},
     h("select",{id:"f-resto","aria-label":"Restaurant",onchange:e=>{A.resto=e.target.value;renderAdmin();}},
       h("option",{value:"",selected:A.resto===""},"Tous les restaurants"),
@@ -949,6 +1010,19 @@ function settingsView(box){
       h("label",{class:"f",for:"rn"+i},"Nom",h("input",{id:"rn"+i,value:r.name,oninput:e=>r.name=e.target.value})),
       h("label",{class:"f",for:"rl"+i},"Langue de l'écran cuisine",
         h("select",{id:"rl"+i,onchange:e=>r.lang=e.target.value}, Object.entries(LANGS).map(([k,l])=>h("option",{value:k,selected:r.lang===k},l))))))),
+    h("h3",{style:{"font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px",margin:"8px 0 10px"}},"Tablettes"),
+    (()=>{ const c=h("div",{class:"cards"},h("div",{class:"muted"},"Chargement…"));
+      store.listDevices().then(list=>{ c.innerHTML="";
+        if (!list.length){ c.append(h("div",{class:"empty"},"Aucune tablette pour l'instant.")); return; }
+        list.forEach(d=>{ const inp=h("input",{id:"dv-"+d.id,value:d.label||"",placeholder:devName(d)});
+          c.append(h("div",{class:"card"},
+            h("label",{class:"f",for:"dv-"+d.id},`Nom · ${(CFG.restaurants.find(r=>r.id===d.restaurant_id)||{}).name||"?"}`,inp),
+            h("div",{class:"row-act"},
+              h("button",{class:"btn",onclick:async()=>{ try{ await store.renameDevice(d.id,inp.value.trim()||null); toast("Tablette renommée"); }catch(e){ toast("Échec : "+(e.message||e)); } }},"Renommer"),
+              h("button",{class:"btn dang",onclick:async()=>{ try{ await store.deleteDevice(d.id); toast("Tablette retirée de la liste"); renderAdmin(); }catch(e){ toast("Échec : "+(e.message||e)); } }},"Retirer"))));
+        });
+      }).catch(()=>{ c.innerHTML=""; c.append(h("div",{class:"empty"},"Impossible de charger les tablettes.")); });
+      return c; })(),
     h("h3",{style:{"font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px",margin:"8px 0 10px"}},"Réglages"),
     h("div",{class:"cards"},
       h("div",{class:"card"},
@@ -1020,7 +1094,7 @@ window.addEventListener("hashchange", route);
   try{ CFG=await store.loadConfig(); LS.set("dc_cfg",CFG); }
   catch(e){ CFG=LS.get("dc_cfg",null)||{products:DEFAULT_PRODUCTS,restaurants:DEFAULT_RESTAURANTS,settings:{...DEFAULT_SETTINGS},sides:DEFAULT_SIDES}; toast("Hors connexion : dernière configuration utilisée"); }
   CFG.sides = CFG.sides || [];
-  route(); flush();
+  route(); flush(); heartbeat();
 })();
 </script>
 
