@@ -245,7 +245,7 @@ input.pinbox{text-align:center;font-size:34px;letter-spacing:.35em;caret-color:t
 @media (max-height:560px){.pinpad button{height:52px;font-size:28px}}
 .tare{margin:-4px 0 2px;font-weight:800;font-size:18px;color:var(--accent)}
 .w-btn{display:inline-flex;align-items:center;margin-top:8px;padding:9px 14px;border-radius:12px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:800;font-size:17px;cursor:pointer;width:max-content}
-.w-tares{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.w-tares{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}@media (max-width:600px){.w-tares{grid-template-columns:repeat(2,1fr)}}
 .w-tare{min-height:78px;border-radius:16px;border:2px solid var(--line);background:var(--surface-2);color:var(--fg);font-family:var(--f-display);font-size:24px;font-weight:800;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:6px}
 .w-tare small{font-family:var(--f-body);font-size:14px;text-transform:none;color:var(--muted);font-weight:700}
 .w-tare.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.w-tare.on small{color:var(--accent-ink)}
@@ -968,7 +968,7 @@ function discardSheet(p){
 
 const SIDE_GROUPS=[["acc","🍚 Accompagnements"],["sau","🥫 Sauces & garnitures"],["des","🍮 Desserts"],["bev","🥤 Boissons périmées"],["fut","🛢 Changement de fût"],["zz","⚠️ Autre"]];
 const sideGroup = x => { const m=/^s_(acc|sau|des|bev|fut|zz)_/.exec(x.id); return m?m[1]:(["s_frites","s_mais","s_riz","s_puree"].includes(x.id)?"acc":"zz"); };
-const TARES=[["big","Grand bac",1350],["half","Demi-bac",700],["none","Sans bac",0]];
+const TARES=[["big","Grand bac",1350],["half","Demi-bac",700],["small","Petit bac",380],["none","Sans bac",0]];
 const isTared = x => x.unit==="g" && (["s_riz","s_puree","s_acc_coleslaw"].includes(x.id) || /^(riz|pur[ée]e|coleslaw)$/i.test((x.name||"").trim()));
 // pesée : poids de la balance − poids du bac = ce qui est jeté
 function weighSheet(x, current, onAdd){
@@ -1024,7 +1024,7 @@ function closingSheet(){
       close(); toast(L("saved"));
     };
     return [
-      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ Riz, purée, coleslaw : appuie sur « Peser », le bac est enlevé tout seul (grand bac 1350 g · demi-bac 700 g)"),
+      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ Riz, purée, coleslaw : appuie sur « Peser », le bac est enlevé tout seul (grand bac 1350 g · demi-bac 700 g · petit bac 380 g)"),
       already ? h("div",{class:"alert"},`${L("closing_done")} ${new Date(lastC).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"})}`) : null,
       h("div",{class:"crows"},body),
       h("div",{class:"sticky-act"}, okBtn, h("button",{class:"act ghost",onclick:close},L("back")))
