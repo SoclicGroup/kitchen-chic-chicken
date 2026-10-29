@@ -244,6 +244,14 @@ details.det summary{cursor:pointer;font-weight:700;font-size:16px;padding:14px 1
 input.pinbox{text-align:center;font-size:34px;letter-spacing:.35em;caret-color:transparent}
 @media (max-height:560px){.pinpad button{height:52px;font-size:28px}}
 .tare{margin:-4px 0 2px;font-weight:800;font-size:18px;color:var(--accent)}
+.w-btn{display:inline-flex;align-items:center;margin-top:8px;padding:9px 14px;border-radius:12px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-weight:800;font-size:17px;cursor:pointer;width:max-content}
+.w-tares{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.w-tare{min-height:78px;border-radius:16px;border:2px solid var(--line);background:var(--surface-2);color:var(--fg);font-family:var(--f-display);font-size:24px;font-weight:800;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:6px}
+.w-tare small{font-family:var(--f-body);font-size:14px;text-transform:none;color:var(--muted);font-weight:700}
+.w-tare.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}.w-tare.on small{color:var(--accent-ink)}
+.w-disp{font-family:var(--f-display);font-size:56px;font-weight:800;text-align:center;background:var(--surface-2);border-radius:16px;padding:8px}
+.w-res{text-align:center;font-weight:800;font-size:19px;color:var(--muted);padding:6px}.w-res.good{color:var(--ok)}.w-res.bad{color:var(--danger)}
+@media (max-width:480px){.w-tare{font-size:18px;min-height:70px}.w-disp{font-size:44px}}
 </style>
 
 <div id="app"></div>
@@ -960,6 +968,34 @@ function discardSheet(p){
 
 const SIDE_GROUPS=[["acc","🍚 Accompagnements"],["sau","🥫 Sauces & garnitures"],["des","🍮 Desserts"],["bev","🥤 Boissons périmées"],["fut","🛢 Changement de fût"],["zz","⚠️ Autre"]];
 const sideGroup = x => { const m=/^s_(acc|sau|des|bev|fut|zz)_/.exec(x.id); return m?m[1]:(["s_frites","s_mais","s_riz","s_puree"].includes(x.id)?"acc":"zz"); };
+const TARES=[["big","Grand bac",1350],["half","Demi-bac",700],["none","Sans bac",0]];
+const isTared = x => x.unit==="g" && (["s_riz","s_puree","s_acc_coleslaw"].includes(x.id) || /^(riz|pur[ée]e|coleslaw)$/i.test((x.name||"").trim()));
+// pesée : poids de la balance − poids du bac = ce qui est jeté
+function weighSheet(x, current, onAdd){
+  let tare="big", w="";
+  const disp=h("div",{class:"w-disp"},"0 g"), res=h("div",{class:"w-res"}), addBtn=h("button",{class:"act prim"},"Ajouter");
+  const tareBox=h("div",{class:"w-tares"});
+  const net=()=>{ const t=TARES.find(z=>z[0]===tare)[2]; return {t, g:(parseInt(w,10)||0), n:(parseInt(w,10)||0)-t}; };
+  const upd=()=>{ const {t,g,n}=net(); disp.textContent=(g?fmt(g):"0")+" g";
+    tareBox.innerHTML=""; TARES.forEach(([k,lab,v])=>tareBox.append(h("button",{class:"w-tare"+(k===tare?" on":""),onclick:()=>{ tare=k; upd(); }},lab,h("small",{},v?("− "+fmt(v)+" g"):"rien à enlever"))));
+    if(!g){ res.className="w-res"; res.textContent="Pose le bac sur la balance et tape le poids affiché"; addBtn.disabled=true; addBtn.textContent="Ajouter"; return; }
+    if(n<=0){ res.className="w-res bad"; res.textContent=`${fmt(g)} g, c'est moins que le bac (${fmt(t)} g) : vérifie le poids ou le bac`; addBtn.disabled=true; addBtn.textContent="Ajouter"; return; }
+    res.className="w-res good"; res.textContent=t?`${fmt(g)} g − bac ${fmt(t)} g = ${fmt(n)} g jetés`:`${fmt(n)} g jetés`;
+    addBtn.disabled=false; addBtn.textContent=`Ajouter ${fmt(n)} g`; };
+  const key=d=>{ if(w.length<5){ w=(w+d).replace(/^0+/,""); upd(); } };
+  const pad=h("div",{class:"pinpad"},...["1","2","3","4","5","6","7","8","9"].map(d=>h("button",{type:"button",onclick:()=>key(d)},d)),
+    h("button",{type:"button",class:"del",onclick:()=>{ w=w.slice(0,-1); upd(); }},"⌫"), h("button",{type:"button",onclick:()=>key("0")},"0"),
+    h("button",{type:"button",class:"del",onclick:()=>{ w=""; upd(); }},"C"));
+  openSheet(close=>{
+    addBtn.onclick=()=>{ const {n}=net(); if(n>0){ onAdd(n); close(); } };
+    upd();
+    return [h("h2",{},"⚖️ Peser · "+x.name),
+      current>0 ? h("p",{class:"sub"},`Déjà noté : ${fmt(current)} g. La pesée s'ajoute (pour plusieurs bacs, pèse-les un par un).`) : h("p",{class:"sub"},"Le poids du bac est enlevé tout seul."),
+      h("div",{class:"cgrp"},"1. Quel bac ?"), tareBox,
+      h("div",{class:"cgrp"},"2. Poids sur la balance"), disp, pad, res,
+      h("div",{class:"sticky-act"}, addBtn, h("button",{class:"act ghost",onclick:close},"Retour"))];
+  },"wide");
+}
 function closingSheet(){
   const r=currentResto(), L=k=>tr(r.lang,k);
   const sides=(CFG.sides||[]).filter(x=>x.active!==false);
@@ -971,7 +1007,8 @@ function closingSheet(){
     const out=h("output",{class:"cq"},"0");
     const set=v=>{ qty[x.id]=Math.max(0,v); out.textContent=qty[x.id]; row.el.classList.toggle("has",qty[x.id]>0); refresh(); };
     const row={el:h("div",{class:"crow"},
-      h("div",{class:"cn"},x.name,h("small",{},unitL(r.lang,x.unit))),
+      h("div",{class:"cn"},x.name,h("small",{},unitL(r.lang,x.unit)),
+        isTared(x) ? h("button",{class:"w-btn","aria-label":"peser "+x.name,onclick:()=>weighSheet(x,qty[x.id],n=>set(qty[x.id]+n))},"⚖️ Peser") : null),
       h("button",{class:"cb","aria-label":"moins "+x.name,onclick:()=>set(qty[x.id]-step(x.unit))},"−"), out,
       h("button",{class:"cb","aria-label":"plus "+x.name,onclick:()=>set(qty[x.id]+step(x.unit))},"+"))};
     return row.el;
@@ -987,7 +1024,7 @@ function closingSheet(){
       close(); toast(L("saved"));
     };
     return [
-      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ (Grand bac = 1350 g · Demi-bac = 700 g)"),
+      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ Riz, purée, coleslaw : appuie sur « Peser », le bac est enlevé tout seul (grand bac 1350 g · demi-bac 700 g)"),
       already ? h("div",{class:"alert"},`${L("closing_done")} ${new Date(lastC).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"})}`) : null,
       h("div",{class:"crows"},body),
       h("div",{class:"sticky-act"}, okBtn, h("button",{class:"act ghost",onclick:close},L("back")))
