@@ -243,6 +243,7 @@ details.det summary{cursor:pointer;font-weight:700;font-size:16px;padding:14px 1
 .pinpad .del{font-size:26px}
 input.pinbox{text-align:center;font-size:34px;letter-spacing:.35em;caret-color:transparent}
 @media (max-height:560px){.pinpad button{height:52px;font-size:28px}}
+.tare{margin:-4px 0 2px;font-weight:800;font-size:18px;color:var(--accent)}
 </style>
 
 <div id="app"></div>
@@ -986,7 +987,7 @@ function closingSheet(){
       close(); toast(L("saved"));
     };
     return [
-      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")),
+      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ (Grand bac = 1350 g · Demi-bac = 700 g)"),
       already ? h("div",{class:"alert"},`${L("closing_done")} ${new Date(lastC).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"})}`) : null,
       h("div",{class:"crows"},body),
       h("div",{class:"sticky-act"}, okBtn, h("button",{class:"act ghost",onclick:close},L("back")))
