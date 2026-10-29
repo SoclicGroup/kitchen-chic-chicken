@@ -1416,13 +1416,14 @@ async function transfersView(box){
   if (!list.length){ res.textContent="Aucun transfert sur cette période. Utilise « + Nouveau transfert » ou le bouton 🔄 Transfert en haut."; return; }
   res.className=""; res.innerHTML="";
   const name=id=>(CFG.restaurants.find(r=>r.id===id)||{}).name||id, v=x=>Number(x.qty)*Number(x.unit_cost);
-  const bal=CFG.restaurants.map(r=>{ const out=list.filter(x=>x.from_resto===r.id), inn=list.filter(x=>x.to_resto===r.id);
-    return {r, out:out.reduce((a,x)=>a+v(x),0), inn:inn.reduce((a,x)=>a+v(x),0), nOut:out.length, nIn:inn.length}; });
-  res.append(h("section",{class:"blk"},h("h3",{},"Bilan par restaurant"),h("p",{class:"muted sub2"},"Donné = marchandise envoyée aux autres · Reçu = marchandise reçue des autres · 📄 = PDF détaillé du restaurant."),
-    table(["Restaurant","Donné","Reçu","Solde","PDF"], bal.map(b=>h("tr",{},h("td",{},b.r.name),
-      h("td",{class:"c-bad"},`${CHF(b.out)} (${b.nOut})`),h("td",{class:"c-ok"},`${CHF(b.inn)} (${b.nIn})`),
-      h("td",{},h("b",{class:b.inn-b.out>=0?"c-ok":"c-bad"},(b.inn-b.out>=0?"+":"−")+CHF(Math.abs(b.inn-b.out)))),
-      h("td",{},(b.nOut||b.nIn)?h("button",{class:"btn sm",onclick:e=>transfersPdf(e,b.r.id)},"📄 PDF"):h("span",{class:"muted"},"–")))))));
+  const rs=CFG.restaurants;
+  const bal=rs.map(r=>{ const out=list.filter(x=>x.from_resto===r.id);
+    return {r, out:out.reduce((a,x)=>a+v(x),0), nOut:out.length, per:Object.fromEntries(rs.map(o=>[o.id,out.filter(x=>x.to_resto===o.id).reduce((a,x)=>a+v(x),0)]))}; });
+  res.append(h("section",{class:"blk"},h("h3",{},"Ce que chaque restaurant a envoyé (à se faire payer)"),h("p",{class:"muted sub2"},"Une ligne = le restaurant qui a envoyé. Les colonnes = combien chaque autre restaurant doit lui payer. 📄 = PDF détaillé."),
+    table(["Restaurant","Total à se faire payer",...rs.map(o=>o.name+" doit"),"PDF"], bal.map(b=>h("tr",{},h("td",{},h("b",{},b.r.name)),
+      h("td",{},h("b",{},CHF(b.out))),
+      ...rs.map(o=>h("td",{class:o.id===b.r.id||!b.per[o.id]?"muted":""},o.id===b.r.id?"—":b.per[o.id]?CHF(b.per[o.id]):"–")),
+      h("td",{},b.nOut?h("button",{class:"btn sm",onclick:e=>transfersPdf(e,b.r.id)},"📄 PDF"):h("span",{class:"muted"},"–")))))));
   res.append(h("section",{class:"blk"},h("h3",{},`Tous les transferts (${list.length})`),
     table(["Quand","De → Vers","Catégorie","Article","Quantité","Valeur","Note",""], list.map(x=>h("tr",{},
       h("td",{},new Date(x.created_at).toLocaleString("fr-CH",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})),
