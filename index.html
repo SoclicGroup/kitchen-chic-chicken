@@ -188,7 +188,7 @@ label.chk{display:flex;align-items:center;gap:10px;font-weight:600}
 .tr-rs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
 .tr-r{min-height:72px;border:2px solid var(--line);border-radius:18px;background:var(--surface-2);color:var(--fg);font-family:var(--f-display);font-weight:800;font-size:20px;text-transform:uppercase;touch-action:manipulation}
 .tr-r.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.tr-sum{grid-column:1/-1}.tr-total{font-weight:800;color:var(--fg)}
+.tr-sum{grid-column:1/-1}.tr-err{grid-column:1/-1;background:var(--danger);color:#fff;font-weight:800;font-size:19px;padding:12px 16px;border-radius:14px;line-height:1.25}.tr-need{outline:3px solid var(--danger);outline-offset:4px;border-radius:16px}@keyframes trshake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}.shake{animation:trshake .3s 2}.tr-total{font-weight:800;color:var(--fg)}
 .sticky-act .tr-sum:empty{display:none}
 .tr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tr-other{grid-column:1/-1;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px}
@@ -236,6 +236,13 @@ details.det summary{cursor:pointer;font-weight:700;font-size:16px;padding:14px 1
 .pin h2{font-family:var(--f-display);font-size:38px;text-transform:uppercase;margin:0}
 .empty{background:var(--surface);border-radius:14px;padding:22px;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;z-index:60;max-width:calc(100% - 32px)}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:360px;margin:4px auto 0}
+.pinpad button{height:68px;border-radius:16px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);font-family:var(--f-display);font-size:34px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.pinpad button:active{transform:scale(.96);background:var(--line)}
+.pinpad .ok{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-size:26px}
+.pinpad .del{font-size:26px}
+input.pinbox{text-align:center;font-size:34px;letter-spacing:.35em;caret-color:transparent}
+@media (max-height:560px){.pinpad button{height:52px;font-size:28px}}
 </style>
 
 <div id="app"></div>
@@ -726,16 +733,30 @@ function renderKitchen(){
   if (!K.hist.length) loadHistory();
 }
 
+// clavier à code intégré : pas de clavier Android qui cache l'écran
+function pinPad(inp, go){
+  inp.setAttribute("inputmode","none"); inp.classList.add("pinbox"); inp.setAttribute("autocomplete","off");
+  const add=d=>{ if(inp.value.length<8) inp.value+=d; };
+  const k=(lab,fn,cls)=>h("button",{type:"button",class:cls||"",onclick:e=>{e.preventDefault(); fn();}},lab);
+  const pad=h("div",{class:"pinpad"},...["1","2","3","4","5","6","7","8","9"].map(d=>k(d,()=>add(d))),
+    k("⌫",()=>{inp.value=inp.value.slice(0,-1);},"del"), k("0",()=>add("0")), k("OK",()=>go(),"ok"));
+  const onKey=e=>{ if(!document.body.contains(pad)){ document.removeEventListener("keydown",onKey); return; }
+    if(document.activeElement===inp) return;
+    if(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+    if(/^\d$/.test(e.key)){ add(e.key); e.preventDefault(); } else if(e.key==="Backspace"){ inp.value=inp.value.slice(0,-1); e.preventDefault(); } else if(e.key==="Enter"){ go(); e.preventDefault(); } };
+  document.addEventListener("keydown",onKey);
+  return pad;
+}
 function changeRestoSheet(){
   const inp=h("input",{id:"cr-pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"••••"});
   openSheet(close=>{
     const go=async()=>{ let ok=false; try{ ok=await store.checkPin(inp.value); }catch(e){ toast("Connexion impossible"); return; }
       if(!ok){ toast("Code incorrect"); inp.value=""; return; }
       close(); LS.set("dc_tablet_resto",null); K.restoId=null; K.started=false; renderKitchen(); };
-    inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); }); setTimeout(()=>inp.focus(),50);
+    inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
     return [h("h2",{},"Changer de restaurant"),h("p",{class:"sub"},"Réservé au gérant : entre le code du dashboard."),
-      h("label",{class:"f",for:"cr-pin"},"Code",inp),
-      h("button",{class:"act prim",onclick:go},"Continuer"),h("button",{class:"act",onclick:close},"Retour")];
+      h("label",{class:"f",for:"cr-pin"},"Code",inp), pinPad(inp,go),
+      h("button",{class:"act",onclick:close},"Retour")];
   });
 }
 let lastInput=Date.now(), lastOpenCheck=Date.now();
@@ -1052,13 +1073,11 @@ function renderAdmin(){
 function pinScreen(){
   const inp=h("input",{id:"pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"••••"});
   const go=async()=>{ let ok=false; try{ ok=await store.checkPin(inp.value); }catch(e){ toast("Connexion impossible"); return; }
-    if (ok){ A.unlocked=true; A.pin=inp.value; renderAdmin(); } else { toast("Code incorrect"); inp.value=""; inp.focus(); } };
+    if (ok){ A.unlocked=true; A.pin=inp.value; renderAdmin(); } else { toast("Code incorrect"); inp.value=""; } };
   inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
-  setTimeout(()=>inp.focus(),50);
   return h("div",{class:"pin"},
     h("h2",{},"Accès gérant"),
-    h("label",{class:"f",for:"pin"},"Code PIN",inp),
-    h("button",{class:"btn prim",onclick:go},"Entrer"),
+    h("label",{class:"f",for:"pin"},"Code PIN",inp), pinPad(inp,go),
     store.mode==="demo" ? h("p",{class:"muted"},"Code par défaut : 1234 (à changer dans Réglages).") : null);
 }
 
@@ -1326,14 +1345,14 @@ function kitchenTransfer(){
   const inp=h("input",{id:"ktr-pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"••••"});
   openSheet(close=>{
     const go=async()=>{ let ok=false; try{ ok=await store.checkPin(inp.value); }catch(e){ toast("Connexion impossible"); return; }
-      if(!ok){ toast("Code incorrect"); inp.value=""; inp.focus(); return; }
+      if(!ok){ toast("Code incorrect"); inp.value=""; return; }
       const pin=inp.value; close();
       A.pin=pin; clearTimeout(trPinTimer); trPinTimer=setTimeout(()=>{ if(!A.unlocked) A.pin=null; },120000);
       transferSheet(()=>{ if(!A.unlocked) A.pin=null; }, K.restoId, true); };
-    inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); }); setTimeout(()=>inp.focus(),50);
+    inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
     return [h("h2",{},"🔄 Transfert"),h("p",{class:"sub"},"Réservé au gérant : entre ton code."),
-      h("label",{class:"f",for:"ktr-pin"},"Code",inp),
-      h("button",{class:"act prim",onclick:go},"Continuer"),h("button",{class:"act ghost",onclick:close},"Retour")];
+      h("label",{class:"f",for:"ktr-pin"},"Code",inp), pinPad(inp,go),
+      h("button",{class:"act ghost",onclick:close},"Retour")];
   });
 }
 // Catalogue Chic Distribution (liste officielle des produits) — par catégorie, avec le conditionnement
@@ -1347,11 +1366,12 @@ function transferSheet(onDone,defFrom,lockFrom){
   const items=transferItems(), all=items.flatMap(g=>g[1]), rs=CFG.restaurants;
   let from=defFrom||null, to=null; const qty={}; let other=null;
   const step=u=>u==="g"?50:1;
-  const okBtn=h("button",{class:"act prim"},"Envoyer"), totalEl=h("div",{class:"tr-total"});
+  const okBtn=h("button",{class:"act prim"},"Envoyer"), totalEl=h("div",{class:"tr-total"}), errEl=h("div",{class:"tr-err",role:"alert",hidden:true});
+  const trErr=(msg,el)=>{ errEl.textContent="⚠️ "+msg; errEl.hidden=false; errEl.classList.remove("shake"); void errEl.offsetWidth; errEl.classList.add("shake"); try{navigator.vibrate&&navigator.vibrate(120);}catch(e){} if(el){ el.classList.add("tr-need"); el.scrollIntoView({block:"center",behavior:"smooth"}); } };
   const refresh=()=>{ const n=Object.values(qty).filter(v=>v>0).length+(other&&other.q>0?1:0);
     const val=all.reduce((a,x)=>a+(qty[x.id]||0)*x.cost,0)+(other&&other.q>0?other.q*other.cost:0);
-    okBtn.textContent="Envoyer"+(n?` (${n})`:""); totalEl.textContent=n&&val>0?`Valeur totale : ${CHF(val)}`:""; };
-  const pick=(box,list,get,set,cls)=>{ box.innerHTML=""; list.forEach(r=>box.append(h("button",{class:"tr-r"+(get()===r.id?" on":""),"data-r":r.id,onclick:()=>{ set(r.id); }},r.name))); };
+    errEl.hidden=true; okBtn.textContent="Envoyer"+(n?` (${n})`:""); totalEl.textContent=n&&val>0?`Valeur totale : ${CHF(val)}`:""; };
+  const pick=(box,list,get,set,cls)=>{ box.innerHTML=""; if(get()){ box.classList.remove("tr-need"); errEl.hidden=true; } list.forEach(r=>box.append(h("button",{class:"tr-r"+(get()===r.id?" on":""),"data-r":r.id,onclick:()=>{ set(r.id); }},r.name))); };
   const fromBox=h("div",{class:"tr-rs"}), toBox=h("div",{class:"tr-rs"});
   const drawFrom=()=>pick(fromBox,rs,()=>from,id=>{ from=id; if(to===from) to=null; drawFrom(); drawTo(); });
   const drawTo=()=>pick(toBox,rs.filter(r=>r.id!==from),()=>to,id=>{ to=id; drawTo(); });
@@ -1372,11 +1392,11 @@ function transferSheet(onDone,defFrom,lockFrom){
   const note=h("input",{id:"tr-note",placeholder:"Note (facultatif)",maxlength:"200"});
   openSheet(close=>{
     okBtn.onclick=async()=>{
-      if (!from){ toast("Choisis le restaurant qui donne"); return; }
-      if (!to){ toast("Choisis le restaurant qui reçoit"); toBox.scrollIntoView({block:"center"}); return; }
+      if (!from){ trErr("Choisis le restaurant qui donne", fromBox); return; }
+      if (!to){ trErr("Choisis d'abord le restaurant qui reçoit (en haut)", toBox); return; }
       const lines=all.filter(x=>qty[x.id]>0).map(x=>({item_id:x.id,item_name:x.name,unit:x.unit,qty:qty[x.id],unit_cost:x.cost}));
-      if (other&&other.q>0){ if(!other.name){ toast("Écris le nom de l'autre article"); oName.focus(); return; } lines.push({item_id:null,item_name:other.name,unit:other.unit,qty:other.q,unit_cost:other.cost}); }
-      if (!lines.length){ toast("Mets au moins une quantité"); return; }
+      if (other&&other.q>0){ if(!other.name){ trErr("Écris le nom de l'autre article", oName); return; } lines.push({item_id:null,item_name:other.name,unit:other.unit,qty:other.q,unit_cost:other.cost}); }
+      if (!lines.length){ trErr("Rien à envoyer : toutes les quantités sont à 0. Appuie sur + à côté d'un article."); return; }
       okBtn.disabled=true;
       try{ for (const l of lines) await store.addTransfer({from,to,...l,note:note.value.trim()||null});
         close(); toast(`🔄 ${lines.length} article(s) envoyé(s) à ${(rs.find(r=>r.id===to)||{}).name}`); onDone&&onDone(); }
@@ -1389,7 +1409,7 @@ function transferSheet(onDone,defFrom,lockFrom){
       h("div",{class:"cgrp"},"Vers (qui reçoit)"), toBox,
       h("div",{class:"crows"},body),
       h("label",{class:"f",for:"tr-note"},"Note",note),
-      h("div",{class:"sticky-act"},h("div",{class:"tr-sum"},totalEl), okBtn, h("button",{class:"act ghost",onclick:close},"Retour"))];
+      h("div",{class:"sticky-act"},errEl,h("div",{class:"tr-sum"},totalEl), okBtn, h("button",{class:"act ghost",onclick:close},"Retour"))];
   },"wide");
 }
 const trQty = x => x.unit==="g" ? `${fmt(Number(x.qty))} g` : /^(unités|unité|pièces|pièce|portions|kg)$/i.test(x.unit) ? `${fmt(Number(x.qty))} ${x.unit}` : `${fmt(Number(x.qty))} × ${x.unit}`;
