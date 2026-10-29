@@ -534,11 +534,11 @@ function SupaStore(){
     },
     async listReports(){
       const out=[];
-      for (const top of ["annees","semaines","journaux"]){
+      for (const top of ["mois","annees","semaines","journaux"]){
         const dirs=chk(await sb.storage.from("reports").list(top,{limit:top==="journaux"?62:200,sortBy:{column:"name",order:"desc"}}));
         for (const d of dirs.filter(x=>!x.id)){
           const files=chk(await sb.storage.from("reports").list(`${top}/${d.name}`,{limit:50,sortBy:{column:"name",order:"asc"}}));
-          out.push({kind:top==="annees"?"year":top==="journaux"?"day":"week",folder:d.name,files:files.filter(f=>f.id).map(f=>({name:f.name,path:`${top}/${d.name}/${f.name}`}))});
+          out.push({kind:top==="mois"?"month":top==="annees"?"year":top==="journaux"?"day":"week",folder:d.name,files:files.filter(f=>f.id).map(f=>({name:f.name,path:`${top}/${d.name}/${f.name}`}))});
         }
       }
       return out;
@@ -1391,11 +1391,12 @@ function transferSheet(onDone,defFrom,lockFrom){
       h("div",{class:"sticky-act"},h("div",{class:"tr-sum"},totalEl), okBtn, h("button",{class:"act ghost",onclick:close},"Retour"))];
   },"wide");
 }
-async function transfersPdf(e){
+const trCatLabel = id => { id=id||""; if (/^p_/.test(id)) return "🍗 Poulet"; if (!id) return "✏️ Autre"; const g=sideGroup({id}); return (SIDE_GROUPS.find(x=>x[0]===g)||["","✏️ Autre"])[1]; };
+async function transfersPdf(e,resto){
   if (store.mode==="demo"){ toast("Le PDF se crée une fois l'app en ligne (pas en mode démo)"); return; }
   const b=e.currentTarget, old=b.textContent; b.disabled=true; b.textContent="Création du PDF…";
   try{ const [f,t]=periodBounds(A.tper||"d30");
-    const r=await fetch(CONFIG.SUPABASE_URL+"/functions/v1/weekly-report",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+CONFIG.SUPABASE_ANON_KEY,apikey:CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify({mode:"manual",kind:"transfers",pin:A.pin,from:f.toISOString(),to:t.toISOString()})});
+    const r=await fetch(CONFIG.SUPABASE_URL+"/functions/v1/weekly-report",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+CONFIG.SUPABASE_ANON_KEY,apikey:CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify({mode:"manual",kind:"transfers",pin:A.pin,resto,from:f.toISOString(),to:t.toISOString()})});
     const j=await r.json().catch(()=>({}));
     if (!r.ok) throw new Error(j.error||"échec");
     const url=await store.reportUrl(j.path);
@@ -1408,7 +1409,6 @@ async function transfersView(box){
   A.tper=A.tper||"d30";
   box.append(h("div",{class:"filters"},
     h("button",{class:"btn prim",onclick:()=>transferSheet(()=>renderAdmin())},"+ Nouveau transfert"),
-    h("button",{class:"btn",onclick:e=>transfersPdf(e)},"📄 PDF détaillé"),
     Object.entries(P).map(([k,l])=>h("button",{class:"chip"+(A.tper===k?" on":""),onclick:()=>{A.tper=k;renderAdmin();}},l))));
   const res=h("div",{class:"empty"},"Chargement…"); box.append(res);
   const [f,t]=periodBounds(A.tper);
@@ -1418,14 +1418,15 @@ async function transfersView(box){
   const name=id=>(CFG.restaurants.find(r=>r.id===id)||{}).name||id, v=x=>Number(x.qty)*Number(x.unit_cost);
   const bal=CFG.restaurants.map(r=>{ const out=list.filter(x=>x.from_resto===r.id), inn=list.filter(x=>x.to_resto===r.id);
     return {r, out:out.reduce((a,x)=>a+v(x),0), inn:inn.reduce((a,x)=>a+v(x),0), nOut:out.length, nIn:inn.length}; });
-  res.append(h("section",{class:"blk"},h("h3",{},"Bilan par restaurant"),h("p",{class:"muted sub2"},"Donné = marchandise envoyée aux autres · Reçu = marchandise reçue des autres."),
-    table(["Restaurant","Donné","Reçu","Solde"], bal.map(b=>h("tr",{},h("td",{},b.r.name),
+  res.append(h("section",{class:"blk"},h("h3",{},"Bilan par restaurant"),h("p",{class:"muted sub2"},"Donné = marchandise envoyée aux autres · Reçu = marchandise reçue des autres · 📄 = PDF détaillé du restaurant."),
+    table(["Restaurant","Donné","Reçu","Solde","PDF"], bal.map(b=>h("tr",{},h("td",{},b.r.name),
       h("td",{class:"c-bad"},`${CHF(b.out)} (${b.nOut})`),h("td",{class:"c-ok"},`${CHF(b.inn)} (${b.nIn})`),
-      h("td",{},h("b",{class:b.inn-b.out>=0?"c-ok":"c-bad"},(b.inn-b.out>=0?"+":"−")+CHF(Math.abs(b.inn-b.out)))))))));
+      h("td",{},h("b",{class:b.inn-b.out>=0?"c-ok":"c-bad"},(b.inn-b.out>=0?"+":"−")+CHF(Math.abs(b.inn-b.out)))),
+      h("td",{},(b.nOut||b.nIn)?h("button",{class:"btn sm",onclick:e=>transfersPdf(e,b.r.id)},"📄 PDF"):h("span",{class:"muted"},"–")))))));
   res.append(h("section",{class:"blk"},h("h3",{},`Tous les transferts (${list.length})`),
-    table(["Quand","De → Vers","Article","Quantité","Valeur","Note",""], list.map(x=>h("tr",{},
+    table(["Quand","De → Vers","Catégorie","Article","Quantité","Valeur","Note",""], list.map(x=>h("tr",{},
       h("td",{},new Date(x.created_at).toLocaleString("fr-CH",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})),
-      h("td",{class:"l"},`${name(x.from_resto)} → ${name(x.to_resto)}`),h("td",{class:"l"},x.item_name),
+      h("td",{class:"l"},`${name(x.from_resto)} → ${name(x.to_resto)}`),h("td",{class:"l muted"},trCatLabel(x.item_id)),h("td",{class:"l"},x.item_name),
       h("td",{},`${fmt(Number(x.qty))} ${x.unit==="g"?"g":x.unit}`),h("td",{},CHF(v(x))),h("td",{class:"l muted"},x.note||""),
       h("td",{},h("button",{class:"btn dang sm",onclick:async e=>{ const b=e.currentTarget; if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent="Confirmer ?"; return; }
         try{ await store.deleteTransfer(x.id); toast("Transfert supprimé"); renderAdmin(); }catch(err){ toast("Échec : "+(err.message||err)); } }},"Supprimer")))))));
@@ -1572,17 +1573,18 @@ function settingsView(box){
 }
 
 async function reportsView(box){
-  box.append(h("p",{class:"muted",style:{"margin-top":"0"}},"Chaque matin à 7h30 : le journal détaillé de la veille (chaque action, heure par heure, un PDF par restaurant, non envoyé par mail). Chaque lundi : le rapport de la semaine. Chaque 1er janvier : le rapport de l'année. Tous les PDF sont gardés ici."));
+  box.append(h("p",{class:"muted",style:{"margin-top":"0"}},"Chaque matin à 7h30 : le journal détaillé de la veille (chaque action, heure par heure, un PDF par restaurant, non envoyé par mail). Chaque lundi : le rapport de la semaine par e-mail (+ les transferts de la semaine, gardés ici). Chaque 1er du mois : les transferts du mois précédent par e-mail, un PDF par restaurant, pour les paiements. Chaque 1er janvier : le rapport de l'année. Tous les PDF sont gardés ici."));
   if (store.mode!=="supabase"){ box.append(h("div",{class:"empty"},"Les rapports PDF sont disponibles une fois l'app reliée à la base de données.")); return; }
   const dIn=h("input",{id:"j-date",type:"date",value:(()=>{const d=new Date();d.setDate(d.getDate()-1);return dayKey(d);})(),max:todayStr(),style:{width:"auto"}});
   box.append(h("div",{class:"row-act",style:{"margin-bottom":"16px"}},
     h("button",{class:"btn prim",onclick:e=>sendReportNow(e,"week")},"Générer la semaine dernière"),
+    h("button",{class:"btn",onclick:e=>sendReportNow(e,"month")},"Envoyer les transferts du mois dernier"),
     h("button",{class:"btn",onclick:e=>sendReportNow(e,"year")},`Générer l'année ${new Date().getFullYear()-1}`),
     h("span",{style:{flex:"1"}}),
     h("label",{class:"f",for:"j-date",style:{"flex-direction":"row","align-items":"center",gap:"8px"}},"Journal du",dIn),
     h("button",{class:"btn",onclick:e=>sendReportNow(e,"day",dIn.value)},"Créer le journal")));
   const tabsR=h("div",{class:"filters"});
-  const kinds=[["all","Tout"],["day","Journaux du jour"],["week","Hebdo"],["year","Annuels"]];
+  const kinds=[["all","Tout"],["day","Journaux du jour"],["week","Hebdo"],["month","Transferts du mois"],["year","Annuels"]];
   const list=h("div",{class:"empty"},"Chargement…"); box.append(list);
   let groups;
   try{ groups=await store.listReports(); }catch(e){ list.textContent="Impossible de charger les rapports : "+(e.message||e); return; }
@@ -1590,13 +1592,14 @@ async function reportsView(box){
   list.className="cards"; list.innerHTML="";
   box.insertBefore(tabsR,list);
   kinds.forEach(([k,l])=>tabsR.append(h("button",{class:"chip"+((A.rkind||"all")===k?" on":""),onclick:()=>{A.rkind=k;renderAdmin();}},l)));
-  const fmtFolder=g=> g.kind==="year" ? `Année ${g.folder}` : g.kind==="day" ? `Journal du ${new Date(g.folder+"T12:00:00").toLocaleDateString("fr-CH",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"})}` : `Semaine du ${g.folder.split("-").reverse().join(".")}`;
+  const MOIS_FR=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+  const fmtFolder=g=> g.kind==="month" ? `Transferts · ${MOIS_FR[Number(g.folder.slice(5,7))-1]} ${g.folder.slice(0,4)}` : g.kind==="year" ? `Année ${g.folder}` : g.kind==="day" ? `Journal du ${new Date(g.folder+"T12:00:00").toLocaleDateString("fr-CH",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric"})}` : `Semaine du ${g.folder.split("-").reverse().join(".")}`;
   groups.filter(g=>(A.rkind||"all")==="all"||g.kind===A.rkind).forEach(g=>list.append(h("div",{class:"card"},
     h("div",{class:"row-act",style:{"justify-content":"space-between"}},
       h("strong",{style:{"font-family":"var(--f-display)","font-size":"22px","text-transform":"uppercase"}},fmtFolder(g)),
-      h("span",{class:"pill "+(g.kind==="year"?"p-cook":g.kind==="day"?"p-sift":"p-closing")},g.kind==="year"?"Annuel":g.kind==="day"?"Journal":"Hebdo")),
+      h("span",{class:"pill "+(g.kind==="year"?"p-cook":g.kind==="day"?"p-sift":g.kind==="month"?"p-discard":"p-closing")},g.kind==="year"?"Annuel":g.kind==="day"?"Journal":g.kind==="month"?"Mensuel":"Hebdo")),
     h("div",{style:{display:"flex","flex-direction":"column",gap:"6px"}}, g.files.map(f=>{
-      const label=/_Transferts-/.test(f.name) ? "🔄 Transferts" : f.name.replace(/^Kitchen-Chic-Chicken_(Semaine|Annuel|Journal)-[\d-]+_/,"").replace(/\.pdf$/,"").replace(/-/g," ");
+      const label=/_Transferts-/.test(f.name) ? "🔄 Transferts · "+f.name.replace(/^.*_Transferts-[\d-]+_?/,"").replace(/\.pdf$/,"").replace(/-/g," ") : f.name.replace(/^Kitchen-Chic-Chicken_(Semaine|Annuel|Journal)-[\d-]+_/,"").replace(/\.pdf$/,"").replace(/-/g," ");
       return h("button",{class:"btn",style:{"text-align":"left"},onclick:async e=>{
         const b=e.currentTarget, old=b.textContent; b.textContent="Ouverture…";
         try{ const url=await store.reportUrl(f.path); const a=h("a",{href:url,target:"_blank",rel:"noopener"}); document.body.append(a); a.click(); a.remove(); }
