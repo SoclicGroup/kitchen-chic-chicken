@@ -165,6 +165,35 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--mu
 label.f .hint{text-transform:none;letter-spacing:0;font-weight:400}
 label.chk{display:flex;align-items:center;gap:10px;font-weight:600}
 .sw{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.snd{display:block;width:100%;margin:0 0 12px;padding:16px;border:0;border-radius:16px;background:#F5B83D;color:#111;font-weight:800;font-size:22px}
+.hero{background:var(--surface);border-radius:20px;padding:20px 22px;margin:6px 0 22px;border:1px solid var(--line)}
+.hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.hero h2{margin:0;font-family:var(--f-display);text-transform:uppercase;font-size:26px}
+.hero-txt{font-size:18px;line-height:1.55;margin:10px 0 16px}
+.badge{display:inline-flex;align-items:center;border-radius:999px;padding:6px 14px;font-weight:800;font-size:15px;white-space:nowrap}
+.badge.sm{padding:3px 10px;font-size:13px}
+.badge.ok{background:rgba(52,199,89,.16);color:var(--ok)}.badge.warn{background:rgba(245,184,61,.16);color:#F5B83D}.badge.bad{background:rgba(255,69,58,.16);color:var(--danger-text)}
+.c-ok{color:var(--ok)}.c-bad{color:var(--danger-text)}
+.big3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.b3{background:var(--surface-2);border-radius:16px;padding:14px 16px;container-type:inline-size;min-width:0}
+.b3 .l{font-weight:700;font-size:15px}.b3 .v{font-family:var(--f-display);font-weight:800;font-size:min(44px,17cqi);line-height:1.15;margin:4px 0;white-space:nowrap;font-variant-numeric:tabular-nums}
+.b3.money .v{font-size:min(40px,12.5cqi)}
+.b3 .h{color:var(--muted);font-size:13px}.b3.ok .v{color:var(--ok)}.b3.bad .v{color:var(--danger-text)}
+.tips{display:flex;flex-direction:column;gap:8px}
+.tip{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border-radius:14px;padding:12px 14px;font-size:16px;line-height:1.45}
+.tip .ti{font-size:22px;line-height:1}
+.sub2{margin:-4px 0 10px}
+.rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.rcard{text-align:left;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--ok);border-radius:16px;padding:14px 16px;color:var(--fg);font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.rcard.warn{border-left-color:#F5B83D}.rcard.bad{border-left-color:var(--danger-text)}
+.rc-top{display:flex;align-items:center;gap:8px;font-size:17px}.rank{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.rc-v{font-family:var(--f-display);font-weight:800;font-size:34px;margin-top:6px}.rcard.ok .rc-v{color:var(--ok)}.rcard.warn .rc-v{color:#F5B83D}.rcard.bad .rc-v{color:var(--danger-text)}
+.rcard .h{color:var(--muted);font-size:13px;margin-top:-4px;margin-bottom:6px}
+.rc-row{display:flex;justify-content:space-between;font-size:14px;border-top:1px solid var(--line);padding-top:5px}
+.lines{display:flex;flex-direction:column}.line{display:flex;justify-content:space-between;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line);font-size:16px}.line:last-child{border-bottom:0}.line b{white-space:nowrap}
+select.more{width:auto;border-radius:999px;font-weight:600;font-size:14px;padding:8px 14px}select.more.on{background:var(--accent);color:var(--accent-ink)}
+details.det summary{cursor:pointer;font-weight:700;font-size:16px;padding:14px 16px;background:var(--surface);border-radius:14px;min-height:44px}
+.opengrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}.opencell{background:var(--surface);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}.opencell .st{font-weight:700}.opencell .st.ok{color:var(--ok)}.opencell .st.warn{color:var(--warn,#F5B83D)}
 .sw button{width:42px;height:42px;border-radius:8px;border:2px solid transparent}
 .sw button.on{border-color:var(--fg)}
 .row-act{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -193,13 +222,13 @@ const CONFIG = { SUPABASE_URL: "https://oqchxcofsfqbnvafwgpr.supabase.co", SUPAB
 
 const LANGS = { fr:"Français", de:"Deutsch", it:"Italiano", en:"English", pt:"Português", es:"Español", sq:"Shqip" };
 const I18N = {
-  fr:{start:"Démarrer le service",resto:"Restaurant de cette tablette",tap:"Toucher pour lancer",qty:"Quelle quantité ?",pieces:"pièces",back:"Retour",sold:"Tout vendu — arrêter",discard_stop:"Jeter des pièces et arrêter",undo:"Annuler (lancé par erreur)",expired:"TERMINÉ",expired_sub:"Jeter les restes",how_many:"Combien de pièces jetées ?",confirm:"Valider",none:"Aucune",all:"Toutes",running:"En cours",pending:"en attente d'envoi"},
-  de:{start:"Service starten",resto:"Restaurant dieses Tablets",tap:"Tippen zum Starten",qty:"Welche Menge?",pieces:"Stück",back:"Zurück",sold:"Alles verkauft — stoppen",discard_stop:"Stücke wegwerfen und stoppen",undo:"Abbrechen (versehentlich gestartet)",expired:"FERTIG",expired_sub:"Reste wegwerfen",how_many:"Wie viele Stücke weggeworfen?",confirm:"Bestätigen",none:"Keine",all:"Alle",running:"Läuft",pending:"warten auf Versand"},
-  it:{start:"Avvia servizio",resto:"Ristorante di questo tablet",tap:"Tocca per avviare",qty:"Quale quantità?",pieces:"pezzi",back:"Indietro",sold:"Tutto venduto — ferma",discard_stop:"Butta pezzi e ferma",undo:"Annulla (avviato per errore)",expired:"FINITO",expired_sub:"Butta gli avanzi",how_many:"Quanti pezzi buttati?",confirm:"Conferma",none:"Nessuno",all:"Tutti",running:"In corso",pending:"in attesa di invio"},
-  en:{start:"Start service",resto:"This tablet's restaurant",tap:"Tap to start",qty:"How many?",pieces:"pieces",back:"Back",sold:"All sold — stop",discard_stop:"Discard pieces and stop",undo:"Cancel (started by mistake)",expired:"DONE",expired_sub:"Discard leftovers",how_many:"How many pieces discarded?",confirm:"Confirm",none:"None",all:"All",running:"Running",pending:"waiting to sync"},
-  pt:{start:"Iniciar serviço",resto:"Restaurante deste tablet",tap:"Toque para iniciar",qty:"Que quantidade?",pieces:"peças",back:"Voltar",sold:"Tudo vendido — parar",discard_stop:"Deitar fora e parar",undo:"Cancelar (iniciado por engano)",expired:"TERMINADO",expired_sub:"Deitar fora o resto",how_many:"Quantas peças deitadas fora?",confirm:"Confirmar",none:"Nenhuma",all:"Todas",running:"Em curso",pending:"à espera de envio"},
-  es:{start:"Iniciar servicio",resto:"Restaurante de esta tableta",tap:"Toca para iniciar",qty:"¿Qué cantidad?",pieces:"piezas",back:"Volver",sold:"Todo vendido — parar",discard_stop:"Tirar piezas y parar",undo:"Cancelar (iniciado por error)",expired:"TERMINADO",expired_sub:"Tirar lo que sobra",how_many:"¿Cuántas piezas tiradas?",confirm:"Confirmar",none:"Ninguna",all:"Todas",running:"En curso",pending:"pendiente de envío"},
-  sq:{start:"Fillo shërbimin",resto:"Restoranti i këtij tableti",tap:"Prek për të nisur",qty:"Sa copë?",pieces:"copë",back:"Kthehu",sold:"Shitur të gjitha — ndalo",discard_stop:"Hidh copë dhe ndalo",undo:"Anulo (nisur gabimisht)",expired:"MBAROI",expired_sub:"Hidh mbetjet",how_many:"Sa copë u hodhën?",confirm:"Konfirmo",none:"Asnjë",all:"Të gjitha",running:"Në vazhdim",pending:"në pritje"}
+  fr:{snd:"Touchez l'écran pour activer le son",start:"Valider ce restaurant",resto:"Restaurant de cette tablette",tap:"Toucher pour lancer",qty:"Quelle quantité ?",pieces:"pièces",back:"Retour",sold:"Tout vendu — arrêter",discard_stop:"Jeter des pièces et arrêter",undo:"Annuler (lancé par erreur)",expired:"TERMINÉ",expired_sub:"Jeter les restes",how_many:"Combien de pièces jetées ?",confirm:"Valider",none:"Aucune",all:"Toutes",running:"En cours",pending:"en attente d'envoi"},
+  de:{snd:"Bildschirm berühren, um den Ton zu aktivieren",start:"Restaurant bestätigen",resto:"Restaurant dieses Tablets",tap:"Tippen zum Starten",qty:"Welche Menge?",pieces:"Stück",back:"Zurück",sold:"Alles verkauft — stoppen",discard_stop:"Stücke wegwerfen und stoppen",undo:"Abbrechen (versehentlich gestartet)",expired:"FERTIG",expired_sub:"Reste wegwerfen",how_many:"Wie viele Stücke weggeworfen?",confirm:"Bestätigen",none:"Keine",all:"Alle",running:"Läuft",pending:"warten auf Versand"},
+  it:{snd:"Tocca lo schermo per attivare il suono",start:"Conferma ristorante",resto:"Ristorante di questo tablet",tap:"Tocca per avviare",qty:"Quale quantità?",pieces:"pezzi",back:"Indietro",sold:"Tutto venduto — ferma",discard_stop:"Butta pezzi e ferma",undo:"Annulla (avviato per errore)",expired:"FINITO",expired_sub:"Butta gli avanzi",how_many:"Quanti pezzi buttati?",confirm:"Conferma",none:"Nessuno",all:"Tutti",running:"In corso",pending:"in attesa di invio"},
+  en:{snd:"Tap the screen to turn on sound",start:"Confirm restaurant",resto:"This tablet's restaurant",tap:"Tap to start",qty:"How many?",pieces:"pieces",back:"Back",sold:"All sold — stop",discard_stop:"Discard pieces and stop",undo:"Cancel (started by mistake)",expired:"DONE",expired_sub:"Discard leftovers",how_many:"How many pieces discarded?",confirm:"Confirm",none:"None",all:"All",running:"Running",pending:"waiting to sync"},
+  pt:{snd:"Toque no ecrã para ativar o som",start:"Confirmar restaurante",resto:"Restaurante deste tablet",tap:"Toque para iniciar",qty:"Que quantidade?",pieces:"peças",back:"Voltar",sold:"Tudo vendido — parar",discard_stop:"Deitar fora e parar",undo:"Cancelar (iniciado por engano)",expired:"TERMINADO",expired_sub:"Deitar fora o resto",how_many:"Quantas peças deitadas fora?",confirm:"Confirmar",none:"Nenhuma",all:"Todas",running:"Em curso",pending:"à espera de envio"},
+  es:{snd:"Toca la pantalla para activar el sonido",start:"Confirmar restaurante",resto:"Restaurante de esta tableta",tap:"Toca para iniciar",qty:"¿Qué cantidad?",pieces:"piezas",back:"Volver",sold:"Todo vendido — parar",discard_stop:"Tirar piezas y parar",undo:"Cancelar (iniciado por error)",expired:"TERMINADO",expired_sub:"Tirar lo que sobra",how_many:"¿Cuántas piezas tiradas?",confirm:"Confirmar",none:"Ninguna",all:"Todas",running:"En curso",pending:"pendiente de envío"},
+  sq:{snd:"Prek ekranin për të aktivizuar zërin",start:"Konfirmo restorantin",resto:"Restoranti i këtij tableti",tap:"Prek për të nisur",qty:"Sa copë?",pieces:"copë",back:"Kthehu",sold:"Shitur të gjitha — ndalo",discard_stop:"Hidh copë dhe ndalo",undo:"Anulo (nisur gabimisht)",expired:"MBAROI",expired_sub:"Hidh mbetjet",how_many:"Sa copë u hodhën?",confirm:"Konfirmo",none:"Asnjë",all:"Të gjitha",running:"Në vazhdim",pending:"në pritje"}
 };
 const I18N_X = {
   fr:{reason:"Pourquoi ?",r_time:"Temps dépassé",r_overcooked:"Trop cuit / sec",r_dropped:"Tombé",r_other:"Autre",advice:"Conseillé"},
@@ -229,13 +258,13 @@ const I18N_S = {
   sq:{sift:"Panimi",sift_alert:"SITE PANIMIN",sift_since:"copë të skuqura që nga sitja e fundit",sift_q:"A u sit panimi?",sift_done:"Panimi u sit",sift_btn:"U bë"}
 };
 const I18N_F = {
-  fr:{closing_done:"Déjà saisi aujourd'hui à",resume:"minuteur(s) en cours — appuie sur Démarrer pour reprendre",undo_confirm:"Confirmer l'annulation"},
-  de:{closing_done:"Heute bereits erfasst um",resume:"Timer laufen — Service starten, um fortzufahren",undo_confirm:"Abbrechen bestätigen"},
-  it:{closing_done:"Già inserito oggi alle",resume:"timer in corso — premi Avvia per riprendere",undo_confirm:"Conferma annullamento"},
-  en:{closing_done:"Already entered today at",resume:"timer(s) running — tap Start to resume",undo_confirm:"Confirm cancel"},
-  pt:{closing_done:"Já registado hoje às",resume:"temporizador(es) em curso — toque em Iniciar para retomar",undo_confirm:"Confirmar cancelamento"},
-  es:{closing_done:"Ya registrado hoy a las",resume:"temporizador(es) en curso — pulsa Iniciar para continuar",undo_confirm:"Confirmar cancelación"},
-  sq:{closing_done:"U regjistrua sot në",resume:"kohëmatës në vazhdim — shtyp Fillo për të vazhduar",undo_confirm:"Konfirmo anulimin"}
+  fr:{opens:"Cuisson dès",closing_done:"Déjà saisi aujourd'hui à",resume:"minuteur(s) en cours — appuie sur Démarrer pour reprendre",undo_confirm:"Confirmer l'annulation"},
+  de:{opens:"Frittieren ab",closing_done:"Heute bereits erfasst um",resume:"Timer laufen — Service starten, um fortzufahren",undo_confirm:"Abbrechen bestätigen"},
+  it:{opens:"Cottura dalle",closing_done:"Già inserito oggi alle",resume:"timer in corso — premi Avvia per riprendere",undo_confirm:"Conferma annullamento"},
+  en:{opens:"Cooking from",closing_done:"Already entered today at",resume:"timer(s) running — tap Start to resume",undo_confirm:"Confirm cancel"},
+  pt:{opens:"Fritura a partir das",closing_done:"Já registado hoje às",resume:"temporizador(es) em curso — toque em Iniciar para retomar",undo_confirm:"Confirmar cancelamento"},
+  es:{opens:"Fritura desde las",closing_done:"Ya registrado hoy a las",resume:"temporizador(es) en curso — pulsa Iniciar para continuar",undo_confirm:"Confirmar cancelación"},
+  sq:{opens:"Skuqja nga ora",closing_done:"U regjistrua sot në",resume:"kohëmatës në vazhdim — shtyp Fillo për të vazhduar",undo_confirm:"Konfirmo anulimin"}
 };
 for (const k in I18N_X) Object.assign(I18N[k], I18N_X[k], I18N_C[k], I18N_S[k], I18N_F[k]);
 const unitL = (lang,u) => u==="pièces" ? tr(lang,"pieces") : tr(lang,"u_"+u);
@@ -253,8 +282,8 @@ const DEFAULT_PRODUCTS = [
   {id:"p_pieces",name:"Pièces de poulet",color:"#D6F24A",minutes:30,cost:0,active:true,quantities:[{label:"1/4",pieces:9},{label:"2/4",pieces:18},{label:"3/4",pieces:27},{label:"4/4",pieces:36}]}
 ];
 const DEFAULT_RESTAURANTS = [
-  {id:"r1",name:"Chic Chicken 1",lang:"fr"},{id:"r2",name:"Chic Chicken 2",lang:"fr"},
-  {id:"r3",name:"Chic Chicken 3",lang:"fr"},{id:"r4",name:"Chic Chicken 4",lang:"fr"}
+  {id:"r1",name:"Chic Chicken 1",lang:"fr",open_time:"10:45"},{id:"r2",name:"Chic Chicken 2",lang:"fr",open_time:"10:45"},
+  {id:"r3",name:"Chic Chicken 3",lang:"fr",open_time:"10:45"},{id:"r4",name:"Chic Chicken 4",lang:"fr",open_time:"10:45"}
 ];
 const DEFAULT_SETTINGS = { pin:"1234", volume:0.8, report_emails:[], sift_every:200 };
 const DEMO_COST = { p_mignon:0.8, p_burger:1.5, p_pieces:1.1 };
@@ -368,6 +397,7 @@ function LocalStore(){
     async fetchAgg(from,to,resto,grain){ return aggLocal(await this.fetchEvents(from,to,resto),grain); },
     async fetchRecent(from,to,resto,limit){ return (await this.fetchEvents(from,to,resto)).slice(-limit).reverse(); },
     async listReports(){ return null; },
+    async firstCook(resto,since){ const e=events.filter(x=>x.type==="cook"&&x.restaurant_id===resto&&x.created_at>=since).sort((a,b)=>a.created_at<b.created_at?-1:1)[0]; return e?e.created_at:null; },
     async lastSift(resto){ const e=events.filter(x=>x.type==="sift"&&x.restaurant_id===resto).sort((a,b)=>a.created_at<b.created_at?1:-1)[0]; return e?e.created_at:null; },
     async cookedSince(resto,since){ return events.filter(x=>x.restaurant_id===resto&&(!since||x.created_at>since)&&(x.type==="cook"||x.type==="cancel")).reduce((a,x)=>a+(x.type==="cook"?1:-1)*x.pieces,0); },
     async heartbeat(d){ const all=LS.get("dc_devices",{}); all[d.id]={...(all[d.id]||{}),...d}; LS.set("dc_devices",all); },
@@ -390,6 +420,7 @@ function SupaStore(){
         sb.from("sides").select("*").order("sort")
       ]);
       const products=chk(p), restaurants=chk(r), settings={...DEFAULT_SETTINGS};
+      HAS_OPEN = !restaurants.length || "open_time" in restaurants[0];
       chk(s).forEach(row=>{ settings[row.key]=row.value; });
       return { products:products.length?products:DEFAULT_PRODUCTS, restaurants:restaurants.length?restaurants:DEFAULT_RESTAURANTS, settings, sides:chk(sd) };
     },
@@ -398,7 +429,7 @@ function SupaStore(){
       chk(await sb.from("products").upsert(rows));
       if (rows.length) chk(await sb.from("products").delete().not("id","in",`(${rows.map(r=>r.id).join(",")})`));
     },
-    async saveRestaurants(list){ chk(await sb.from("restaurants").upsert(list.map(r=>({id:r.id,name:r.name,lang:r.lang})))); },
+    async saveRestaurants(list){ chk(await sb.from("restaurants").upsert(list.map(r=>{ const o={id:r.id,name:r.name,lang:r.lang}; if ("open_time" in r && HAS_OPEN) o.open_time=openTime(r); return o; }))); },
     async saveSides(list){
       const rows=list.map((x,i)=>({id:x.id,name:x.name,unit:x.unit,cost:Number(x.cost)||0,active:x.active!==false,sort:i}));
       if (rows.length) chk(await sb.from("sides").upsert(rows));
@@ -443,6 +474,7 @@ function SupaStore(){
       return out;
     },
     async heartbeat(d){ chk(await sb.from("devices").upsert(d)); },
+    async firstCook(resto,since){ const d=chk(await sb.from("events").select("created_at").eq("restaurant_id",resto).eq("type","cook").gte("created_at",since).order("created_at",{ascending:true}).limit(1)); return d[0]?d[0].created_at:null; },
     async lastSift(resto){ const d=chk(await sb.from("events").select("created_at").eq("restaurant_id",resto).eq("type","sift").order("created_at",{ascending:false}).limit(1)); return d[0]?d[0].created_at:null; },
     async cookedSince(resto,since){
       let total=0;
@@ -568,6 +600,9 @@ function advise(p){
   return (sorted.find(q=>q.pieces>=demand*0.9)||sorted[sorted.length-1]).label;
 }
 let kIntervals=[], audio=null, wake=null;
+var HAS_OPEN=true;
+const openTime = r => /^\d\d:\d\d$/.test((r&&r.open_time)||"") ? r.open_time : "10:45";
+const openToday = r => { const [hh,mm]=openTime(r).split(":").map(Number), d=new Date(); d.setHours(hh,mm,0,0); return d; };
 const currentResto = () => CFG && CFG.restaurants.find(r=>r.id===K.restoId);
 const saveTimers = () => LS.set("dc_timers", K.timers);
 
@@ -593,7 +628,8 @@ function renderKitchen(){
   stopKitchen();
   const app=$("#app"); app.innerHTML="";
   const r=currentResto();
-  if (!K.started || !r){ app.append(startScreen()); return; }
+  if (!r){ app.append(startScreen()); return; }
+  if (!K.started){ K.started=true; initAudio(); requestWake(); loadHistory(); heartbeat(); }
   const L=k=>tr(r.lang,k);
   const grid=h("div",{class:"grid"}, CFG.products.filter(p=>p.active!==false || K.timers[p.id]).map(p=>
     h("button",{class:"tile","data-id":p.id,style:{"--c":p.color},onclick:()=>onTile(p)},
@@ -602,27 +638,56 @@ function renderKitchen(){
   app.append(h("div",{class:"k"},
     h("div",{class:"top"},
       logoEl(),
-      h("span",{class:"chip"},r.name),
+      h("button",{class:"chip",title:"Changer de restaurant (code gérant)",onclick:changeRestoSheet},r.name),
       h("span",{class:"sp"}),
       h("span",{id:"sync",class:"muted"}),
       h("span",{id:"clock",class:"clock num"}),
+      h("span",{id:"opens",class:"chip opens",hidden:true}),
       h("button",{class:"chip sift-btn",id:"sift-btn",hidden:!siftEvery(),onclick:siftSheet},"🧂 "+L("sift")+" ",h("b",{class:"num"},"…")),
       (CFG.sides||[]).some(x=>x.active!==false) ? h("button",{class:"chip closing-btn",onclick:closingSheet},"🌙 "+L("closing")) : null,
       h("a",{class:"chip",href:"#admin"},"Dashboard")
     ),
     h("button",{class:"sift-bar",id:"sift-bar",hidden:true,onclick:siftSheet},h("span",{class:"sb-txt"}),h("span",{class:"sb-cta"},L("sift_btn")+" →")),
+    h("button",{class:"snd",id:"snd",hidden:true,onclick:initAudio},"🔊 "+L("snd")),
     grid));
   tick(); updateSync(); refreshSift();
   kIntervals.push(setInterval(tick,250), setInterval(refreshConfig,60000), setInterval(loadHistory,3600000), setInterval(refreshSift,60000));
   if (!K.hist.length) loadHistory();
 }
 
+function changeRestoSheet(){
+  const inp=h("input",{id:"cr-pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"••••"});
+  openSheet(close=>{
+    const go=async()=>{ let ok=false; try{ ok=await store.checkPin(inp.value); }catch(e){ toast("Connexion impossible"); return; }
+      if(!ok){ toast("Code incorrect"); inp.value=""; return; }
+      close(); LS.set("dc_tablet_resto",null); K.restoId=null; K.started=false; renderKitchen(); };
+    inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); }); setTimeout(()=>inp.focus(),50);
+    return [h("h2",{},"Changer de restaurant"),h("p",{class:"sub"},"Réservé au gérant : entre le code du dashboard."),
+      h("label",{class:"f",for:"cr-pin"},"Code",inp),
+      h("button",{class:"act prim",onclick:go},"Continuer"),h("button",{class:"act",onclick:close},"Retour")];
+  });
+}
+let lastInput=Date.now(), lastOpenCheck=Date.now();
+["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,()=>{
+  lastInput=Date.now(); initAudio();
+  if (K.started){ if(!wake||wake.released) requestWake();
+    try{ if(location.hash!=="#admin" && !document.fullscreenElement && !matchMedia("(display-mode: standalone)").matches && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){} }
+},true));
+// une tablette de cuisine revient toute seule sur les minuteurs (inactivité 3 min, ou à l'heure de début de cuisson)
+setInterval(()=>{
+  const now=Date.now(), rid=LS.get("dc_tablet_resto",null), r=rid&&CFG&&CFG.restaurants.find(x=>x.id===rid);
+  if (r && location.hash==="#admin"){
+    const op=openToday(r).getTime(), crossed=lastOpenCheck<op && now>=op;
+    if (now-lastInput>180000 || crossed) location.hash="#cuisine";
+  }
+  lastOpenCheck=now;
+},15000);
 function startScreen(){
   const sel=h("select",{id:"resto-pick"}, CFG.restaurants.map(r=>h("option",{value:r.id,selected:r.id===K.restoId},r.name)));
   const lang=()=> (CFG.restaurants.find(r=>r.id===sel.value)||{}).lang||"fr";
   const btn=h("button",{class:"act prim",onclick:()=>{
     K.restoId=sel.value; LS.set("dc_tablet_resto",K.restoId); K.started=true;
-    initAudio(); requestWake(); loadHistory(); heartbeat();
+    initAudio(); requestWake(); loadHistory(); heartbeat(); toast("Tablette enregistrée : elle restera sur ce restaurant");
     try{ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{}); }catch(e){}
     renderKitchen();
   }}, tr(lang(),"start"));
@@ -633,7 +698,7 @@ function startScreen(){
     running ? h("div",{class:"alert",style:{"font-size":"20px"}},`⚠ ${running} ${tr(lang(),"resume")}`) : null,
     (()=>{ const i=h("div",{class:"start-ic"}); i.innerHTML=LOGO_GLYPH; return i; })(),
     h("h1",{},"Kitchen ",h("span",{},"Chic Chicken")),
-    h("p",{},"Minuteurs bain-marie · alarme son + écran rouge · chaque lancement et chaque pièce jetée est enregistré."),
+    h("p",{},"Première installation : choisis le restaurant de cette tablette. C'est à faire une seule fois, ensuite la tablette s'ouvre directement sur les minuteurs."),
     lab, btn,
     h("a",{class:"chip",href:"#admin",style:{"align-self":"flex-start"}},"Ouvrir le dashboard"));
 }
@@ -656,6 +721,8 @@ function tick(){
     }
   });
   const c=$("#clock"); if(c) c.textContent=new Date().toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"});
+  const sn=$("#snd"); if(sn) sn.hidden = !(Object.keys(K.timers).length && (!audio || audio.state!=="running"));
+  const op=$("#opens"); if(op){ const before=now<openToday(r).getTime() && !Object.keys(K.timers).length; op.hidden=!before; if(before) op.textContent="🍗 "+L("opens")+" "+openTime(r); }
 }
 let lastSiftBeep=0;
 setInterval(()=>{ if (K.started) alarmCheck(); }, 1500); // l'alarme continue même sur le dashboard
@@ -820,7 +887,7 @@ function renderAdmin(){
   if (store.mode==="demo") wrap.append(h("div",{class:"banner"},"Mode démo : données d'exemple, enregistrées seulement sur cet appareil. Une fois Supabase branché, les 4 restaurants et toutes les tablettes partagent les mêmes données."));
   if (!A.unlocked){ wrap.append(pinScreen()); app.append(wrap); return; }
   wrap.append(h("div",{class:"tabs",role:"tablist"},
-    [["stats","Statistiques"],["reports","Rapports PDF"],["timers","Minuteurs & fermeture"],["settings","Restaurants & réglages"]].map(([k,l])=>
+    [["stats","📊 Résumé"],["reports","📄 Rapports PDF"],["timers","⏱ Minuteurs"],["settings","⚙️ Réglages"]].map(([k,l])=>
       h("button",{class:"chip"+(A.tab===k?" on":""),role:"tab","aria-selected":String(A.tab===k),onclick:()=>{A.tab=k;renderAdmin();}},l))));
   const box=h("div",{}); wrap.append(box); app.append(wrap);
   if (A.tab==="stats") statsView(box);
@@ -857,6 +924,7 @@ function compute(rows, hourRows, buckets){
       if (!closing.has(k)) closing.set(k,{name:sd?sd.name:e.product_name,unit:e.label,qty:0,chf:0,n:0});
       const c=closing.get(k), cc=pc*(Number(sd&&sd.cost)||0)/(e.label==="g"?100:1);
       c.qty+=pc; c.chf+=cc; c.n+=n; T.closeChf+=cc;
+      { const rr=CFG.restaurants.find(x=>x.id===e.restaurant_id), R2=get(resto,e.restaurant_id,{name:rr?rr.name:e.restaurant_id}); R2.closeChf=(R2.closeChf||0)+cc; }
       continue;
     }
     const p=prodById(e.product_id), r=CFG.restaurants.find(x=>x.id===e.restaurant_id);
@@ -911,6 +979,21 @@ function devState(d){
   if (min>=3) return {k:"off", t: min<60 ? `Hors ligne depuis ${Math.round(min)} min` : min<1440 ? `Hors ligne depuis ${Math.round(min/60)} h` : `Hors ligne depuis ${Math.round(min/1440)} j`};
   return d.in_service ? {k:"ok",t:"En service"} : {k:"idle",t:"Allumée · service non démarré"};
 }
+function openPanel(){
+  const wrap=h("section",{class:"blk"},h("h3",{style:{margin:"18px 0 10px","font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px"}},"Début de cuisson aujourd'hui"));
+  const grid=h("div",{class:"opengrid"}); wrap.append(grid);
+  const mid=new Date(); mid.setHours(0,0,0,0);
+  CFG.restaurants.forEach(r=>{
+    const cell=h("div",{class:"opencell"},h("b",{},r.name),h("span",{class:"muted"},"Prévu "+openTime(r)),h("span",{class:"st muted"},"…")); grid.append(cell);
+    store.firstCook(r.id,mid.toISOString()).then(t=>{
+      const st=cell.querySelector(".st"), plan=openToday(r);
+      if (!t){ st.textContent = Date.now()<plan.getTime() ? "Pas encore l'heure" : "Rien lancé pour l'instant"; st.className="st "+(Date.now()<plan.getTime()?"muted":"warn"); return; }
+      const d=new Date(t), diff=Math.round((d-plan)/60000), hm=d.toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"});
+      st.textContent="1re fournée "+hm+(diff>0?` (+${diff} min)`:diff<0?` (${diff} min)`:" (pile)"); st.className="st "+(diff>15?"warn":"ok");
+    }).catch(()=>{ cell.querySelector(".st").textContent="—"; });
+  });
+  return wrap;
+}
 function devicesPanel(){
   const wrap=h("section",{class:"blk devs-wrap"});
   (async()=>{
@@ -936,90 +1019,121 @@ function devicesPanel(){
 }
 
 async function statsView(box){
-  box.append(h("div",{class:"row-act",style:{"justify-content":"space-between","margin-bottom":"10px"}},
-    h("h3",{style:{margin:"0","font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px"}},"Tablettes"),
-    h("button",{class:"btn",onclick:()=>renderAdmin()},"Actualiser")));
-  box.append(devicesPanel());
-  box.append(...[h("div",{class:"filters"},
+  const MAIN={today:"Aujourd'hui",d7:"7 derniers jours",d30:"30 derniers jours",year:"Cette année"};
+  const MORE={yesterday:"Hier",month:"Ce mois",lastyear:"Année dernière",custom:"Choisir des dates"};
+  box.append(h("div",{class:"filters"},
     h("select",{id:"f-resto","aria-label":"Restaurant",onchange:e=>{A.resto=e.target.value;renderAdmin();}},
-      h("option",{value:"",selected:A.resto===""},"Tous les restaurants"),
+      h("option",{value:"",selected:A.resto===""},"🏪 Tous les restaurants"),
       CFG.restaurants.map(r=>h("option",{value:r.id,selected:A.resto===r.id},r.name))),
-    Object.entries(PERIODS).map(([k,l])=>h("button",{class:"chip"+(A.period===k?" on":""),onclick:()=>{A.period=k;renderAdmin();}},l))),
-    A.period==="custom" ? h("div",{class:"filters custom"},
+    Object.entries(MAIN).map(([k,l])=>h("button",{class:"chip"+(A.period===k?" on":""),onclick:()=>{A.period=k;renderAdmin();}},l)),
+    h("select",{class:"more"+(MORE[A.period]?" on":""),"aria-label":"Autre période",onchange:e=>{ if(e.target.value){A.period=e.target.value;renderAdmin();} }},
+      h("option",{value:""},"Autre période…"),
+      Object.entries(MORE).map(([k,l])=>h("option",{value:k,selected:A.period===k},l)))));
+  if (A.period==="custom") box.append(h("div",{class:"filters custom"},
       h("label",{class:"f",for:"f-from"},"Du",h("input",{id:"f-from",type:"date",value:A.from,max:todayStr(),onchange:e=>{if(e.target.value){A.from=e.target.value;renderAdmin();}}})),
-      h("label",{class:"f",for:"f-to"},"Au",h("input",{id:"f-to",type:"date",value:A.to,max:todayStr(),onchange:e=>{if(e.target.value){A.to=e.target.value;renderAdmin();}}}))) : null].filter(Boolean));
+      h("label",{class:"f",for:"f-to"},"Au",h("input",{id:"f-to",type:"date",value:A.to,max:todayStr(),onchange:e=>{if(e.target.value){A.to=e.target.value;renderAdmin();}}}))));
   const res=h("div",{class:"empty"},"Chargement…"); box.append(res);
   const [fromD,toD]=periodBounds(A.period), from=fromD.toISOString(), to=toD.toISOString();
   const B=bucketsFor(fromD,toD);
   let rows, hrows, recent;
   try{ [rows,hrows,recent]=await Promise.all([store.fetchAgg(from,to,A.resto||null,B.grain), store.fetchAgg(from,to,A.resto||null,"hour"), store.fetchRecent(from,to,A.resto||null,60)]); }
   catch(e){ res.textContent="Impossible de charger les données : "+(e.message||e)+". Vérifie la connexion internet."; return; }
-  if (!rows.length){ res.textContent="Aucune donnée sur cette période. Les chiffres apparaissent dès qu'un cuisinier lance un minuteur."; return; }
+  const whoTxt = A.resto ? (CFG.restaurants.find(r=>r.id===A.resto)||{}).name : "les 4 restaurants";
+  const perTxt = ({today:"aujourd'hui",yesterday:"hier",d7:"ces 7 derniers jours",d30:"ces 30 derniers jours",month:"ce mois",year:"cette année",lastyear:"l'année dernière",custom:`du ${A.from.split("-").reverse().join(".")} au ${A.to.split("-").reverse().join(".")}`})[A.period];
+  if (A.period==="today" && !A.resto) box.insertBefore(openPanel(), res);
+  if (!rows.length){ res.textContent=`Rien n'a été enregistré ${perTxt}. Les chiffres apparaissent dès qu'un cuisinier lance un minuteur.`; box.append(devicesBlock()); return; }
   res.className=""; res.innerHTML="";
-  const S=compute(rows,hrows,B.buckets), sold=S.T.cooked-S.T.disc;
-  const totalActions=rows.reduce((a,r)=>a+Number(r.n),0);
-  res.append(h("div",{class:"kpis"},
-    h("div",{class:"kpi"},h("div",{class:"l"},"Fournées lancées"),h("div",{class:"v"},fmt(S.T.batches))),
-    h("div",{class:"kpi"},h("div",{class:"l"},"Pièces cuites"),h("div",{class:"v"},fmt(S.T.cooked))),
-    h("div",{class:"kpi sold"},h("div",{class:"l"},"Pièces vendues"),h("div",{class:"v"},fmt(sold)),h("div",{class:"h"},"cuites − jetées")),
-    h("div",{class:"kpi loss"},h("div",{class:"l"},"Pièces jetées"),h("div",{class:"v"},fmt(S.T.disc))),
-    h("div",{class:"kpi loss"},h("div",{class:"l"},"Taux de perte"),h("div",{class:"v"},lossPct(S.T))),
-    h("div",{class:"kpi loss money"},h("div",{class:"l"},"Perte totale en CHF"),h("div",{class:"v"},CHF(S.T.chf+S.T.closeChf)),
-      CFG.products.some(p=>Number(p.cost)>0)
-        ? h("div",{class:"h"},`poulet ${CHF(S.T.chf)} · fermeture ${CHF(S.T.closeChf)}`)
-        : h("div",{class:"h"},"Indique les coûts dans Minuteurs"))));
+  const S=compute(rows,hrows,B.buckets), T=S.T, sold=T.cooked-T.disc, pct=T.cooked?100*T.disc/T.cooked:0, money=T.chf+T.closeChf;
+  const verdict = pct<5 ? ["ok","👍 Bien","Peu de pertes, continuez comme ça."] : pct<10 ? ["warn","⚠ À surveiller","Les pertes commencent à compter."] : ["bad","🚨 Trop de pertes","Il faut cuire moins à la fois."];
 
+  // 1. En bref
+  res.append(h("section",{class:"hero"},
+    h("div",{class:"hero-top"},h("h2",{},"En bref"),h("span",{class:"badge "+verdict[0]},verdict[1])),
+    h("p",{class:"hero-txt"},`Pour ${whoTxt}, ${perTxt} : `,h("b",{},fmt(T.cooked)+" pièces de poulet cuites"),", ",
+      h("b",{class:"c-ok"},fmt(sold)+" vendues")," et ",h("b",{class:"c-bad"},fmt(T.disc)+" jetées"),
+      ` (${pct.toFixed(1)} %). `, money>0?["Les pertes ont coûté ",h("b",{class:"c-bad"},CHF(money)),"."]:null, " ", verdict[2]),
+    h("div",{class:"big3"},
+      h("div",{class:"b3 ok"},h("div",{class:"l"},"✅ Vendues"),h("div",{class:"v"},fmt(sold)),h("div",{class:"h"},"pièces servies aux clients")),
+      h("div",{class:"b3 bad"},h("div",{class:"l"},"🗑 Jetées"),h("div",{class:"v"},fmt(T.disc)),h("div",{class:"h"},`${pct.toFixed(1)} % de ce qui a été cuit`)),
+      h("div",{class:"b3 bad money"},h("div",{class:"l"},"💸 Argent perdu"),h("div",{class:"v"},CHF(money)),
+        h("div",{class:"h"}, CFG.products.some(p=>Number(p.cost)>0) ? `poulet ${CHF(T.chf)} + fin de service ${CHF(T.closeChf)}` : "Ajoute le prix par pièce dans l'onglet Minuteurs")))));
+
+  // 2. À faire
+  const tips=[];
+  const rs=S.resto.filter(o=>o.cooked>0);
+  if (!A.resto && rs.length>1){ const w=[...rs].sort((a,b)=>b.disc/b.cooked-a.disc/a.cooked)[0]; if (w.disc) tips.push(["🏪",`${w.name} jette le plus : ${lossPct(w)} de sa production.`]); }
+  const wp=[...S.prod].sort((a,b)=>b.chf-a.chf||b.disc-a.disc)[0];
+  if (wp && wp.disc) tips.push(["🍗",`${wp.name} : ${fmt(wp.disc)} pièces jetées${wp.chf?` (${CHF(wp.chf)})`:""}. Lancer des quantités plus petites quand c'est calme.`]);
+  const hb=[...S.hours].filter(x=>x.b>0).sort((a,b)=>b.b-a.b)[0];
+  if (hb) tips.push(["🕒",`C'est vers ${hb.label} qu'on jette le plus (${fmt(hb.b)} pièces).`]);
+  const P=S.proc;
+  if (P.n){ const on=Math.round(100*P.ontime/P.n); tips.push([on>=80?"👍":"⏰", on>=80 ? `L'équipe réagit bien aux alarmes : ${on} % traitées en moins de 2 minutes.` : `Les alarmes ne sont traitées à temps que ${on} % du temps (objectif 80 %). ${fmt(P.late5)} fois plus de 5 minutes de retard.`]); }
+  if (T.siftLate) tips.push(["🧂",`La panure a été filtrée en retard ${fmt(T.siftLate)} fois.`]);
+  const cl=[...S.closing].sort((a,b)=>b.chf-a.chf)[0];
+  if (cl && cl.chf>0) tips.push(["🌙",`En fin de service, ${cl.name.toLowerCase()} est ce qu'on jette le plus (${CHF(cl.chf)}).`]);
+  if (tips.length) res.append(h("section",{class:"blk"},h("h3",{},"À retenir"),h("div",{class:"tips"},tips.map(([i,t])=>h("div",{class:"tip"},h("span",{class:"ti"},i),h("span",{},t))))));
+
+  // 3. Restaurants
+  if (!A.resto && rs.length>1){
+    const ranked=[...S.resto].sort((a,b)=>(a.cooked?a.disc/a.cooked:0)-(b.cooked?b.disc/b.cooked:0));
+    res.append(h("section",{class:"blk"},h("h3",{},"Les restaurants"),h("p",{class:"muted sub2"},"Du meilleur au moins bon. Touchez un restaurant pour voir son détail."),
+      h("div",{class:"rcards"}, ranked.map((o,i)=>{ const p=o.cooked?100*o.disc/o.cooked:0, cls=p<5?"ok":p<10?"warn":"bad";
+        return h("button",{class:"rcard "+cls,onclick:()=>{ A.resto=(CFG.restaurants.find(r=>r.name===o.name)||{}).id||""; renderAdmin(); }},
+          h("div",{class:"rc-top"},h("span",{class:"rank"},i+1),h("b",{},o.name)),
+          h("div",{class:"rc-v"},p.toFixed(1)+" %"),h("div",{class:"h"},"de pertes"),
+          h("div",{class:"rc-row"},h("span",{},"Vendues"),h("b",{},fmt(o.cooked-o.disc))),
+          h("div",{class:"rc-row"},h("span",{},"Jetées"),h("b",{},fmt(o.disc))),
+          h("div",{class:"rc-row"},h("span",{},"Perdu"),h("b",{},CHF(o.chf+(o.closeChf||0))))); }))));
+  }
+
+  // 4. Produits
   res.append(h("section",{class:"blk"},h("h3",{},"Par produit"),
-    table(["Produit","Fournées","Cuites","Jetées","Vendues","Perte","Perte CHF"],
-      S.prod.map(o=>h("tr",{},
+    table(["Produit","Cuites","Vendues","Jetées","% jeté","Perdu"],
+      S.prod.map(o=>{ const p=o.cooked?100*o.disc/o.cooked:0; return h("tr",{},
         h("td",{},h("i",{class:"dot",style:{background:o.color}}),o.name),
-        h("td",{},fmt(o.batches)),h("td",{},fmt(o.cooked)),h("td",{},fmt(o.disc)),
-        h("td",{},fmt(o.cooked-o.disc)),h("td",{class:"loss"},lossPct(o)),h("td",{class:"loss"},CHF(o.chf)))))));
+        h("td",{},fmt(o.cooked)),h("td",{class:"c-ok"},fmt(o.cooked-o.disc)),h("td",{class:"c-bad"},fmt(o.disc)),
+        h("td",{},h("span",{class:"badge sm "+(p<5?"ok":p<10?"warn":"bad")},p.toFixed(1)+" %")),h("td",{class:"c-bad"},CHF(o.chf))); }))));
 
-  res.append(h("section",{class:"blk"},h("h3",{},"Pertes à la fermeture"),
-    S.closing.length ? table(["Accompagnement","Fermetures","Quantité jetée","Perte CHF"],
-      S.closing.sort((a,b)=>b.chf-a.chf||b.qty-a.qty).map(c=>h("tr",{},h("td",{},c.name),h("td",{},fmt(c.n)),h("td",{},`${fmt(c.qty)} ${c.unit==="g"?"g":c.unit}`),h("td",{class:"loss"},CHF(c.chf)))))
-    : h("div",{class:"empty"},"Rien n'a été saisi en fin de service sur cette période.")));
+  // 5. Fin de service
+  res.append(h("section",{class:"blk"},h("h3",{},"Jeté à la fin du service"),
+    S.closing.length ? table(["Quoi","Quantité jetée","Nombre de soirs","Perdu"],
+      S.closing.sort((a,b)=>b.chf-a.chf||b.qty-a.qty).map(c=>h("tr",{},h("td",{},c.name),h("td",{},`${fmt(c.qty)} ${c.unit==="g"?"g":c.unit}`),h("td",{},fmt(c.n)),h("td",{class:"c-bad"},CHF(c.chf)))))
+    : h("div",{class:"empty"},`Rien n'a été saisi avec « Fin de service » ${perTxt}.`)));
 
+  // 6. Pourquoi
   const rTot=Object.values(S.reasons).reduce((a,b)=>a+b,0);
   if (rTot) res.append(h("section",{class:"blk"},h("h3",{},"Pourquoi on jette"),
     h("div",{class:"panel"}, REASONS.filter(k=>S.reasons[k]).sort((a,b)=>S.reasons[b]-S.reasons[a]).map(k=>
       h("div",{class:"hbar"},h("span",{},REASON_FR[k]),h("div",{class:"tr"},h("i",{style:{width:(100*S.reasons[k]/rTot)+"%"}})),
         h("b",{},`${fmt(S.reasons[k])} pièces · ${Math.round(100*S.reasons[k]/rTot)} %`))))));
 
-  if (siftEvery()) res.append(h("section",{class:"blk"},h("h3",{},"Filtrage de la panure"),
-    S.T.siftN ? h("div",{class:"kpis",style:{"margin-bottom":"0"}},
-      h("div",{class:"kpi"},h("div",{class:"l"},"Panure filtrée"),h("div",{class:"v"},fmt(S.T.siftN)+"×")),
-      h("div",{class:"kpi"},h("div",{class:"l"},"Moyenne entre 2 filtrages"),h("div",{class:"v"},fmt(Math.round(S.T.siftPieces/S.T.siftN))),h("div",{class:"h"},`pièces · objectif ${siftEvery()}`)),
-      h("div",{class:"kpi "+(S.T.siftLate?"loss":"ok")},h("div",{class:"l"},"Filtrages en retard"),h("div",{class:"v"},fmt(S.T.siftLate||0)),h("div",{class:"h"},"plus de 10 % au-delà du seuil")))
-    : h("div",{class:"empty"},"La panure n'a pas encore été filtrée sur cette période.")));
+  // 7. Équipe
+  const sent=[];
+  if (P.n){ const on=Math.round(100*P.ontime/P.n);
+    sent.push(h("div",{class:"line"},h("span",{},"Quand un minuteur sonne, l'équipe s'en occupe en moyenne en"),h("b",{},mmssS(P.sum/P.n)+" min")));
+    sent.push(h("div",{class:"line"},h("span",{},"Alarmes traitées en moins de 2 minutes"),h("b",{class:on>=80?"c-ok":"c-bad"},on+" %")));
+    sent.push(h("div",{class:"line"},h("span",{},"Fois où une alarme a sonné plus de 5 minutes"),h("b",{class:P.late5?"c-bad":"c-ok"},fmt(P.late5)))); }
+  if (siftEvery()){
+    sent.push(h("div",{class:"line"},h("span",{},"Panure filtrée"),h("b",{},fmt(T.siftN||0)+" fois")));
+    if (T.siftN) sent.push(h("div",{class:"line"},h("span",{},`Pièces cuites entre 2 filtrages (objectif ${siftEvery()})`),h("b",{class:(T.siftPieces/T.siftN)>siftEvery()*1.1?"c-bad":"c-ok"},fmt(Math.round(T.siftPieces/T.siftN)))));
+    if (T.siftLate) sent.push(h("div",{class:"line"},h("span",{},"Filtrages faits en retard"),h("b",{class:"c-bad"},fmt(T.siftLate)))); }
+  if (sent.length) res.append(h("section",{class:"blk"},h("h3",{},"L'équipe respecte-t-elle la procédure ?"),h("div",{class:"panel lines"},sent)));
 
-  const P=S.proc;
-  res.append(h("section",{class:"blk"},h("h3",{},"Respect de la procédure"),
-    P.n ? h("div",{class:"kpis",style:{"margin-bottom":"0"}},
-      h("div",{class:"kpi"},h("div",{class:"l"},"Minuteurs arrivés à zéro"),h("div",{class:"v"},fmt(P.n))),
-      h("div",{class:"kpi"},h("div",{class:"l"},"Réaction moyenne"),h("div",{class:"v"},mmssS(P.sum/P.n)),h("div",{class:"h"},"min:s après l'alarme")),
-      h("div",{class:"kpi "+(P.ontime/P.n>=0.8?"ok":"loss")},h("div",{class:"l"},"Traités en moins de 2 min"),h("div",{class:"v"},Math.round(100*P.ontime/P.n)+" %")),
-      h("div",{class:"kpi "+(P.late5?"loss":"ok")},h("div",{class:"l"},"Plus de 5 min de retard"),h("div",{class:"v"},fmt(P.late5))))
-    : h("div",{class:"empty"},"Pas encore de minuteur arrivé à zéro sur cette période.")));
-
-  if (!A.resto && S.resto.length>1){
-    res.append(h("section",{class:"blk"},h("h3",{},"Par restaurant"),
-      table(["Restaurant","Fournées","Cuites","Jetées","Vendues","Perte"],
-        S.resto.map(o=>h("tr",{},h("td",{},o.name),h("td",{},fmt(o.batches)),h("td",{},fmt(o.cooked)),h("td",{},fmt(o.disc)),h("td",{},fmt(o.cooked-o.disc)),h("td",{class:"loss"},lossPct(o)))))));
-  }
-
+  // 8. Graphiques
   const used=S.hours.map((b,i)=>(b.a||b.b)?i:-1).filter(i=>i>=0);
-  if (used.length) res.append(h("section",{class:"blk"},h("h3",{},"Par heure"),chart(S.hours.slice(Math.min(...used),Math.max(...used)+1))));
-  if (S.series.length>1) res.append(h("section",{class:"blk"},h("h3",{},B.grain==="month"?"Par mois":"Par jour"),chart(S.series)));
+  if (used.length) res.append(h("section",{class:"blk"},h("h3",{},"Heure par heure"),h("p",{class:"muted sub2"},"Vert = pièces cuites · Rouge = pièces jetées"),chart(S.hours.slice(Math.min(...used),Math.max(...used)+1))));
+  if (S.series.length>1) res.append(h("section",{class:"blk"},h("h3",{},B.grain==="month"?"Mois par mois":"Jour par jour"),h("p",{class:"muted sub2"},"Vert = pièces cuites · Rouge = pièces jetées"),chart(S.series)));
 
-  const label={cook:"Lancé",discard:"Jeté",cancel:"Annulé",close:"Clôturé",closing:"Fermeture",sift:"Panure filtrée"};
+  // 9. Tablettes
+  res.append(devicesBlock());
 
-  const head=h("div",{class:"row-act",style:{"justify-content":"space-between","margin-bottom":"10px"}},h("h3",{style:{margin:"0"}},"Journal des actions"));
-  if (!inFrame) head.append(h("button",{class:"btn",onclick:async e=>{ const b=e.currentTarget; b.disabled=true; b.textContent="Préparation…"; try{ exportCSV(await store.fetchEvents(from,to,A.resto||null)); }catch(err){ toast("Export impossible : "+(err.message||err)); } b.disabled=false; b.textContent="Exporter CSV"; }},"Exporter CSV"));
-  res.append(h("section",{class:"blk"},head,
-    h("div",{class:"tw"}, h("table",{},
-      h("thead",{},h("tr",{},["Date & heure","Restaurant","Produit","Action","Quantité","Pièces","Détail"].map((c,i)=>h("th",{class:i<4||i===6?"l":""},c)))),
+  // 10. Détail (replié)
+  const label={cook:"Lancé",discard:"Jeté",cancel:"Annulé",close:"Terminé sans perte",closing:"Fin de service",sift:"Panure filtrée"};
+  const totalActions=rows.reduce((a,r)=>a+Number(r.n),0);
+  const det=h("details",{class:"blk det"},h("summary",{},`Voir le détail des actions (${fmt(totalActions)})`));
+  if (!inFrame) det.append(h("button",{class:"btn",style:{margin:"10px 0"},onclick:async e=>{ const b=e.currentTarget; b.disabled=true; b.textContent="Préparation…"; try{ exportCSV(await store.fetchEvents(from,to,A.resto||null)); }catch(err){ toast("Export impossible : "+(err.message||err)); } b.disabled=false; b.textContent="Télécharger tout (Excel)"; }},"Télécharger tout (Excel)"));
+  det.append(h("div",{class:"tw"}, h("table",{},
+      h("thead",{},h("tr",{},["Quand","Restaurant","Produit","Action","Quantité","Pièces","Détail"].map((c,i)=>h("th",{class:i<4||i===6?"l":""},c)))),
       h("tbody",{},
       recent.map(e=>{ const d=new Date(e.created_at), r=CFG.restaurants.find(x=>x.id===e.restaurant_id);
         return h("tr",{},
@@ -1028,7 +1142,14 @@ async function statsView(box){
           h("td",{class:"l"},h("span",{class:"pill p-"+e.type},label[e.type]||e.type)),
           h("td",{},e.label), h("td",{},fmt(e.pieces)),
           h("td",{class:"l muted"},[e.reason?REASON_FR[e.reason]:null, e.late_seconds!=null?"réaction "+mmssS(e.late_seconds):null, e.type==="sift"?(e.label==="late"?"en retard":"à temps")+` · ${e.pieces} pièces depuis le précédent`:null].filter(Boolean).join(" · "))); })))),
-    totalActions>60 ? h("p",{class:"muted"},`60 dernières actions affichées sur ${fmt(totalActions)}.`) : null));
+    totalActions>60 ? h("p",{class:"muted"},`Les 60 dernières sont affichées. « Télécharger tout » donne la liste complète.`) : null);
+  res.append(det);
+}
+function devicesBlock(){
+  return h("section",{class:"blk"},
+    h("div",{class:"row-act",style:{"justify-content":"space-between"}},h("h3",{style:{margin:"0"}},"Les tablettes"),h("button",{class:"btn",onclick:()=>renderAdmin()},"Actualiser")),
+    h("p",{class:"muted sub2"},"Vert = allumée et connectée. Rouge = éteinte ou sans internet."),
+    devicesPanel());
 }
 
 function exportCSV(events){
@@ -1131,7 +1252,8 @@ function settingsView(box){
     h("div",{class:"cards"}, rd.map((r,i)=>h("div",{class:"card"},
       h("label",{class:"f",for:"rn"+i},"Nom",h("input",{id:"rn"+i,value:r.name,oninput:e=>r.name=e.target.value})),
       h("label",{class:"f",for:"rl"+i},"Langue de l'écran cuisine",
-        h("select",{id:"rl"+i,onchange:e=>r.lang=e.target.value}, Object.entries(LANGS).map(([k,l])=>h("option",{value:k,selected:r.lang===k},l))))))),
+        h("select",{id:"rl"+i,onchange:e=>r.lang=e.target.value}, Object.entries(LANGS).map(([k,l])=>h("option",{value:k,selected:r.lang===k},l)))),
+      h("label",{class:"f",for:"ro"+i},"Début de cuisson du poulet",HAS_OPEN?null:h("span",{class:"hint"}," — bientôt modifiable"),h("input",{id:"ro"+i,type:"time",disabled:!HAS_OPEN,value:openTime(r),onchange:e=>{ if(/^\d\d:\d\d$/.test(e.target.value)) r.open_time=e.target.value; }}))))),
     h("h3",{style:{"font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px",margin:"8px 0 10px"}},"Tablettes"),
     (()=>{ const c=h("div",{class:"cards"},h("div",{class:"muted"},"Chargement…"));
       store.listDevices().then(list=>{ c.innerHTML="";
@@ -1220,7 +1342,7 @@ async function sendReportNow(e,kind,date){
 /* ---------- Démarrage ---------- */
 function route(){
   stopKitchen(); document.querySelectorAll(".ov").forEach(o=>o.remove());
-  if (location.hash==="#admin") renderAdmin(); else renderKitchen();
+  if (location.hash==="#admin") renderAdmin(); else { A.unlocked=false; A.pin=null; renderKitchen(); }
 }
 window.addEventListener("hashchange", route);
 (async function init(){
