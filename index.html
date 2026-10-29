@@ -303,7 +303,7 @@ const PRESETS = ["#D6F24A","#F5B83D","#F27F3D","#FF8FA3","#C77DFF","#5EB8FF","#4
 const DEFAULT_PRODUCTS = [
   {id:"p_mignon",name:"Filets mignons",color:"#F5B83D",minutes:60,cost:0,active:true,quantities:[{label:"10",pieces:10},{label:"20",pieces:20},{label:"30",pieces:30}]},
   {id:"p_burger",name:"Filets burger",color:"#F27F3D",minutes:45,cost:0,active:true,quantities:[{label:"1",pieces:1},{label:"2",pieces:2},{label:"3",pieces:3},{label:"4",pieces:4},{label:"5",pieces:5},{label:"6",pieces:6},{label:"7",pieces:7},{label:"8",pieces:8}]},
-  {id:"p_pieces",name:"Pièces de poulet",color:"#D6F24A",minutes:90,cost:0,active:true,quantities:[{label:"1/4",pieces:9},{label:"2/4",pieces:18},{label:"3/4",pieces:27},{label:"4/4",pieces:36}]}
+  {id:"p_pieces",name:"Pièces de poulet",color:"#D6F24A",minutes:60,cost:0,active:true,quantities:[{label:"1/4",pieces:9},{label:"2/4",pieces:18},{label:"3/4",pieces:27},{label:"4/4",pieces:36}]}
 ];
 const DEFAULT_RESTAURANTS = [
   {id:"r1",name:"Chic Chicken 1",lang:"fr",open_time:"10:45"},{id:"r2",name:"Chic Chicken 2",lang:"fr",open_time:"10:45"},
@@ -708,6 +708,7 @@ function renderKitchen(){
       h("span",{id:"clock",class:"clock num"}),
       h("span",{id:"opens",class:"chip opens",hidden:true}),
       h("button",{class:"chip drop-btn",onclick:dropSheet},"🗑 "+L("drop")),
+      h("button",{class:"chip k-tr-btn",onclick:kitchenTransfer},"🔄 Transfert"),
       h("button",{class:"chip sift-btn",id:"sift-btn",hidden:!siftEvery(),onclick:siftSheet},"🧂 "+L("sift")+" ",h("b",{class:"num"},"…")),
       (CFG.sides||[]).some(x=>x.active!==false) ? h("button",{class:"chip closing-btn",onclick:closingSheet},"🌙 "+L("closing")) : null
     ),
@@ -1313,17 +1314,34 @@ function devicesBlock(){
 }
 
 /* ----- Transferts de marchandise (gérant uniquement) ----- */
+// depuis l'écran cuisine : code gérant demandé à chaque fois
+let trPinTimer=null;
+function kitchenTransfer(){
+  const inp=h("input",{id:"ktr-pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"••••"});
+  openSheet(close=>{
+    const go=async()=>{ let ok=false; try{ ok=await store.checkPin(inp.value); }catch(e){ toast("Connexion impossible"); return; }
+      if(!ok){ toast("Code incorrect"); inp.value=""; inp.focus(); return; }
+      const pin=inp.value; close();
+      A.pin=pin; clearTimeout(trPinTimer); trPinTimer=setTimeout(()=>{ if(!A.unlocked) A.pin=null; },120000);
+      transferSheet(()=>{ if(!A.unlocked) A.pin=null; }, K.restoId); };
+    inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); }); setTimeout(()=>inp.focus(),50);
+    return [h("h2",{},"🔄 Transfert"),h("p",{class:"sub"},"Réservé au gérant : entre ton code."),
+      h("label",{class:"f",for:"ktr-pin"},"Code",inp),
+      h("button",{class:"act prim",onclick:go},"Continuer"),h("button",{class:"act ghost",onclick:close},"Retour")];
+  });
+}
 function transferItems(){
   const groups=[["🍗 Poulet", CFG.products.map(p=>({id:p.id,name:p.name,unit:"pièces",cost:Number(p.cost)||0}))]];
   SIDE_GROUPS.forEach(([g,label])=>{ const l=(CFG.sides||[]).filter(x=>sideGroup(x)===g).map(x=>({id:x.id,name:x.name,unit:x.unit,cost:(Number(x.cost)||0)/(x.unit==="g"?100:1)}));
     if (l.length) groups.push([label,l]); });
   return groups;
 }
-function transferSheet(onDone){
+function transferSheet(onDone,defFrom){
   const items=transferItems(), all=items.flatMap(g=>g[1]);
   const rs=CFG.restaurants;
-  const fromS=h("select",{id:"tr-from"}, rs.map((r,i)=>h("option",{value:r.id,selected:i===0},r.name)));
-  const toS=h("select",{id:"tr-to"}, rs.map((r,i)=>h("option",{value:r.id,selected:i===1},r.name)));
+  const f0=defFrom||rs[0].id, t0=(rs.find(r=>r.id!==f0)||rs[0]).id;
+  const fromS=h("select",{id:"tr-from"}, rs.map(r=>h("option",{value:r.id,selected:r.id===f0},r.name)));
+  const toS=h("select",{id:"tr-to"}, rs.map(r=>h("option",{value:r.id,selected:r.id===t0},r.name)));
   const itemS=h("select",{id:"tr-item"}, items.map(([label,l])=>h("optgroup",{label},l.map(x=>h("option",{value:x.id},x.name)))), h("optgroup",{label:"✏️ Autre"},h("option",{value:"__other"},"Autre article (à écrire)")));
   const otherName=h("input",{id:"tr-oname",placeholder:"Nom de l'article"}), otherUnit=h("input",{id:"tr-ounit",placeholder:"Unité (ex : cartons)",value:"unités"}), otherCost=h("input",{id:"tr-ocost",type:"number",min:"0",step:"0.05",inputmode:"decimal",placeholder:"Prix par unité (CHF)"});
   const otherBox=h("div",{class:"tr-other",hidden:true},otherName,otherUnit,otherCost);
