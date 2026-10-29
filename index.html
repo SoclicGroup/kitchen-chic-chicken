@@ -185,12 +185,17 @@ label.chk{display:flex;align-items:center;gap:10px;font-weight:600}
 .tile{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tr-btn{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:800}
 .tr-fixed{min-height:44px;display:flex;align-items:center;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-weight:800}
+.tr-rs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.tr-r{min-height:72px;border:2px solid var(--line);border-radius:18px;background:var(--surface-2);color:var(--fg);font-family:var(--f-display);font-weight:800;font-size:20px;text-transform:uppercase;touch-action:manipulation}
+.tr-r.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tr-sum{grid-column:1/-1}.tr-total{font-weight:800;color:var(--fg)}
+.sticky-act .tr-sum:empty{display:none}
 .tr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tr-other{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
+.tr-other{grid-column:1/-1;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px}
 .tr-q{display:flex;align-items:center;gap:10px}.tr-q input{font-size:22px;font-weight:700}.tr-unit{font-weight:700;white-space:nowrap}
 .tr-val{font-weight:700;margin-top:-4px}
 .btn.sm{min-height:36px;padding:6px 10px;font-size:13px}
-@media (max-width:560px){.tr-grid,.tr-other{grid-template-columns:1fr}}
+@media (max-width:560px){.tr-grid,.tr-other{grid-template-columns:1fr 1fr}}
 .hero{background:var(--surface);border-radius:20px;padding:20px 22px;margin:6px 0 22px;border:1px solid var(--line)}
 .hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .hero h2{margin:0;font-family:var(--f-display);text-transform:uppercase;font-size:26px}
@@ -1338,41 +1343,53 @@ function transferItems(){
   return groups;
 }
 function transferSheet(onDone,defFrom,lockFrom){
-  const items=transferItems(), all=items.flatMap(g=>g[1]);
-  const rs=CFG.restaurants;
-  const f0=defFrom||rs[0].id;
-  const fromS=h("select",{id:"tr-from",disabled:!!lockFrom}, rs.map(r=>h("option",{value:r.id,selected:r.id===f0},r.name)));
-  const toS=h("select",{id:"tr-to"});
-  const fillTo=()=>{ const keep=toS.value; toS.innerHTML=""; rs.filter(r=>r.id!==fromS.value).forEach(r=>toS.append(h("option",{value:r.id,selected:r.id===keep},r.name))); };
-  fromS.addEventListener("change",fillTo); fillTo();
-  const itemS=h("select",{id:"tr-item"}, items.map(([label,l])=>h("optgroup",{label},l.map(x=>h("option",{value:x.id},x.name)))), h("optgroup",{label:"✏️ Autre"},h("option",{value:"__other"},"Autre article (à écrire)")));
-  const otherName=h("input",{id:"tr-oname",placeholder:"Nom de l'article"}), otherUnit=h("input",{id:"tr-ounit",placeholder:"Unité (ex : cartons)",value:"unités"}), otherCost=h("input",{id:"tr-ocost",type:"number",min:"0",step:"0.05",inputmode:"decimal",placeholder:"Prix par unité (CHF)"});
-  const otherBox=h("div",{class:"tr-other",hidden:true},otherName,otherUnit,otherCost);
-  const qty=h("input",{id:"tr-qty",type:"number",min:"0",step:"any",inputmode:"decimal",placeholder:"0"});
-  const unitL=h("span",{class:"tr-unit"}), val=h("div",{class:"tr-val muted"});
+  const items=transferItems(), all=items.flatMap(g=>g[1]), rs=CFG.restaurants;
+  let from=defFrom||null, to=null; const qty={}; let other=null;
+  const step=u=>u==="g"?50:1;
+  const okBtn=h("button",{class:"act prim"},"Envoyer"), totalEl=h("div",{class:"tr-total"});
+  const refresh=()=>{ const n=Object.values(qty).filter(v=>v>0).length+(other&&other.q>0?1:0);
+    const val=all.reduce((a,x)=>a+(qty[x.id]||0)*x.cost,0)+(other&&other.q>0?other.q*other.cost:0);
+    okBtn.textContent="Envoyer"+(n?` (${n})`:""); totalEl.textContent=n?`Valeur totale : ${CHF(val)}`:""; };
+  const pick=(box,list,get,set,cls)=>{ box.innerHTML=""; list.forEach(r=>box.append(h("button",{class:"tr-r"+(get()===r.id?" on":""),"data-r":r.id,onclick:()=>{ set(r.id); }},r.name))); };
+  const fromBox=h("div",{class:"tr-rs"}), toBox=h("div",{class:"tr-rs"});
+  const drawFrom=()=>pick(fromBox,rs,()=>from,id=>{ from=id; if(to===from) to=null; drawFrom(); drawTo(); });
+  const drawTo=()=>pick(toBox,rs.filter(r=>r.id!==from),()=>to,id=>{ to=id; drawTo(); });
+  if (!lockFrom) drawFrom(); drawTo();
+  const row=x=>{ const out=h("output",{class:"cq"},"0"); let el;
+    const set=v=>{ qty[x.id]=Math.max(0,v); out.textContent=qty[x.id]; el.classList.toggle("has",qty[x.id]>0); refresh(); };
+    el=h("div",{class:"crow"},h("div",{class:"cn"},x.name,h("small",{},x.unit==="g"?"grammes":x.unit)),
+      h("button",{class:"cb","aria-label":"moins "+x.name,onclick:()=>set((qty[x.id]||0)-step(x.unit))},"−"), out,
+      h("button",{class:"cb","aria-label":"plus "+x.name,onclick:()=>set((qty[x.id]||0)+step(x.unit))},"+"));
+    return el; };
+  const body=[]; items.forEach(([label,l])=>{ body.push(h("div",{class:"cgrp"},label), ...l.map(row)); });
+  // article libre
+  const oName=h("input",{id:"tr-oname",placeholder:"Nom de l'article"}), oUnit=h("input",{id:"tr-ounit",value:"unités",placeholder:"Unité"}),
+        oCost=h("input",{id:"tr-ocost",type:"number",min:"0",step:"0.05",inputmode:"decimal",placeholder:"Prix / unité CHF"}), oQty=h("input",{id:"tr-oqty",type:"number",min:"0",step:"any",inputmode:"decimal",placeholder:"Quantité"});
+  const oUpd=()=>{ other={name:oName.value.trim(),unit:oUnit.value.trim()||"unités",cost:parseFloat(oCost.value)||0,q:parseFloat(oQty.value)||0}; refresh(); };
+  [oName,oUnit,oCost,oQty].forEach(e=>e.addEventListener("input",oUpd));
+  body.push(h("div",{class:"cgrp"},"✏️ Autre article"), h("div",{class:"tr-other"},oName,oUnit,oCost,oQty));
   const note=h("input",{id:"tr-note",placeholder:"Note (facultatif)",maxlength:"200"});
-  const cur=()=>{ if(itemS.value==="__other") return {id:null,name:otherName.value.trim(),unit:otherUnit.value.trim()||"unités",cost:parseFloat(otherCost.value)||0}; return all.find(x=>x.id===itemS.value); };
-  const upd=()=>{ otherBox.hidden=itemS.value!=="__other"; const it=cur(); unitL.textContent=it?(it.unit==="g"?"grammes":it.unit):""; const q=parseFloat(qty.value)||0; val.textContent=q&&it?`Valeur : ${CHF(q*it.cost)}`:""; };
-  [itemS,qty,otherCost,otherUnit].forEach(e=>e.addEventListener("input",upd)); itemS.addEventListener("change",upd); upd();
   openSheet(close=>{
-    const save=async e=>{ const b=e.currentTarget, it=cur(), q=parseFloat(qty.value);
-      if (fromS.value===toS.value){ toast("Choisis deux restaurants différents"); return; }
-      if (!it || !it.name){ toast("Choisis ou écris l'article"); return; }
-      if (!(q>0)){ toast("Indique la quantité"); qty.focus(); return; }
-      b.disabled=true;
-      try{ await store.addTransfer({from:fromS.value,to:toS.value,item_id:it.id,item_name:it.name,unit:it.unit,qty:q,unit_cost:it.cost,note:note.value.trim()||null});
-        close(); toast(`🔄 Transfert noté : ${fmt(q)} ${it.unit==="g"?"g":it.unit} ${it.name}`); onDone&&onDone(); }
-      catch(err){ b.disabled=false; toast("Échec : "+(err.message||err)); } };
-    return [h("h2",{},"🔄 Transfert"),h("p",{class:"sub"},"Marchandise envoyée d'un restaurant à un autre."),
-      h("div",{class:"tr-grid"},
-        lockFrom ? h("div",{class:"f"},"De (qui donne)",h("div",{class:"tr-fixed",id:"tr-from-fixed"},"🏪 "+(rs.find(r=>r.id===f0)||{}).name),h("span",{hidden:true},fromS)) : h("label",{class:"f",for:"tr-from"},"De (qui donne)",fromS),
-        h("label",{class:"f",for:"tr-to"},"Vers (qui reçoit)",toS)),
-      h("label",{class:"f",for:"tr-item"},"Article",itemS), otherBox,
-      h("label",{class:"f",for:"tr-qty"},"Quantité",h("div",{class:"tr-q"},qty,unitL)), val,
+    okBtn.onclick=async()=>{
+      if (!from){ toast("Choisis le restaurant qui donne"); return; }
+      if (!to){ toast("Choisis le restaurant qui reçoit"); toBox.scrollIntoView({block:"center"}); return; }
+      const lines=all.filter(x=>qty[x.id]>0).map(x=>({item_id:x.id,item_name:x.name,unit:x.unit,qty:qty[x.id],unit_cost:x.cost}));
+      if (other&&other.q>0){ if(!other.name){ toast("Écris le nom de l'autre article"); oName.focus(); return; } lines.push({item_id:null,item_name:other.name,unit:other.unit,qty:other.q,unit_cost:other.cost}); }
+      if (!lines.length){ toast("Mets au moins une quantité"); return; }
+      okBtn.disabled=true;
+      try{ for (const l of lines) await store.addTransfer({from,to,...l,note:note.value.trim()||null});
+        close(); toast(`🔄 ${lines.length} article(s) envoyé(s) à ${(rs.find(r=>r.id===to)||{}).name}`); onDone&&onDone(); }
+      catch(err){ okBtn.disabled=false; toast("Échec : "+(err.message||err)); }
+    };
+    refresh();
+    return [h("h2",{},"🔄 Transfert"),
+      h("div",{class:"cgrp"},"De (qui donne)"),
+      lockFrom ? h("div",{class:"tr-fixed",id:"tr-from-fixed"},"🏪 "+(rs.find(r=>r.id===from)||{}).name) : fromBox,
+      h("div",{class:"cgrp"},"Vers (qui reçoit)"), toBox,
+      h("div",{class:"crows"},body),
       h("label",{class:"f",for:"tr-note"},"Note",note),
-      h("button",{class:"act prim",onclick:save},"Enregistrer le transfert"),
-      h("button",{class:"act ghost",onclick:close},"Retour")];
-  });
+      h("div",{class:"sticky-act"},h("div",{class:"tr-sum"},totalEl), okBtn, h("button",{class:"act ghost",onclick:close},"Retour"))];
+  },"wide");
 }
 async function transfersView(box){
   const P={d7:"7 derniers jours",d30:"30 derniers jours",month:"Ce mois",year:"Cette année",lastyear:"Année dernière"};
