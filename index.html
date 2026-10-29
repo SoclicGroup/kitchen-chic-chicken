@@ -77,7 +77,12 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .big small{font-family:var(--f-body);font-size:14px;font-weight:600;color:var(--muted);margin-top:6px}
 .k .top .chip{min-height:52px;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;font-size:16px}
 .closing-btn{background:var(--surface-2)}
-.crows{display:flex;flex-direction:column;gap:8px}
+.crows{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:8px}
+.sheet.wide{max-width:1100px}
+.cgrp{grid-column:1/-1;font-family:var(--f-display);font-weight:800;font-size:19px;text-transform:uppercase;margin:12px 0 0;color:var(--muted)}
+.crow.has{box-shadow:inset 0 0 0 2px var(--accent)}
+.sticky-act{position:sticky;bottom:-22px;margin:0 -22px -22px;padding:12px 22px 22px;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.sticky-act .act{margin:0}
 .crow{display:grid;grid-template-columns:minmax(0,1fr) 64px auto 64px;gap:10px;align-items:center;background:var(--surface-2);border-radius:16px;padding:10px 12px}
 @media (max-width:560px){.crow{grid-template-columns:64px 1fr 64px}.crow .cn{grid-column:1/-1}}
 .cn{min-width:0;overflow-wrap:anywhere;font-family:var(--f-display);font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
@@ -297,12 +302,46 @@ const DEFAULT_RESTAURANTS = [
   {id:"r3",name:"Chic Chicken 3",lang:"fr",open_time:"10:45"},{id:"r4",name:"Chic Chicken 4",lang:"fr",open_time:"10:45"}
 ];
 const DEFAULT_SETTINGS = { pin:"1234", volume:0.8, report_emails:[], sift_every:200 };
-const DEMO_COST = { p_mignon:0.8, p_burger:1.5, p_pieces:1.1 };
+const DEMO_COST = { p_mignon:2.5, p_burger:6.9, p_pieces:4.5 };
 const DEFAULT_SIDES = [
-  {id:"s_riz",name:"Riz",unit:"g",cost:0,active:true},{id:"s_mais",name:"Maïs",unit:"unités",cost:0,active:true},
-  {id:"s_puree",name:"Purée",unit:"g",cost:0,active:true},{id:"s_frites",name:"Frites",unit:"portions",cost:0,active:true}
+  {id:"s_frites",name:"Frites",unit:"portions",cost:3.9,active:true},
+  {id:"s_mais",name:"Maïs",unit:"unités",cost:4.5,active:true},
+  {id:"s_riz",name:"Riz",unit:"g",cost:2.0,active:true},
+  {id:"s_puree",name:"Purée",unit:"g",cost:2.0,active:true},
+  {id:"s_acc_haricots",name:"Salade de haricots",unit:"portions",cost:4.5,active:true},
+  {id:"s_acc_pdt",name:"Pommes de terre",unit:"portions",cost:4.5,active:true},
+  {id:"s_acc_coleslaw",name:"Coleslaw",unit:"g",cost:2.0,active:true},
+  {id:"s_acc_pain",name:"Pain burger",unit:"pièces",cost:1.9,active:true},
+  {id:"s_sau_gravy",name:"Gravy",unit:"g",cost:0.5,active:true},
+  {id:"s_sau_cheddar",name:"Sauce cheddar",unit:"g",cost:2.5,active:true},
+  {id:"s_sau_iceberg",name:"Salade iceberg",unit:"g",cost:1.0,active:true},
+  {id:"s_sau_tomate",name:"Tomates coupées",unit:"g",cost:0.6,active:true},
+  {id:"s_sau_oignon",name:"Oignons coupés",unit:"g",cost:0.6,active:true},
+  {id:"s_des_blanc",name:"Mousse chocolat blanc",unit:"unités",cost:3.9,active:true},
+  {id:"s_des_noir",name:"Mousse chocolat noir",unit:"unités",cost:3.9,active:true},
+  {id:"s_des_mix",name:"Mousse chocolat mix",unit:"unités",cost:3.9,active:true},
+  {id:"s_des_macarons",name:"Mini macarons",unit:"unités",cost:3.9,active:true},
+  {id:"s_des_fruits",name:"Salade de fruits",unit:"unités",cost:3.9,active:true},
+  {id:"s_des_flan",name:"Flan caramel",unit:"unités",cost:3.9,active:true},
+  {id:"s_bev_coca",name:"Coca-Cola",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_cocazero",name:"Coca Zéro",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_fanta",name:"Fanta",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_sprite",name:"Sprite",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_fusetea",name:"Fuze Tea",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_eauplate",name:"Eau plate",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_eaugaz",name:"Eau gazeuse",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_orange",name:"Jus d'orange",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_cocktail",name:"Jus cocktail",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_bilz",name:"Bilz",unit:"unités",cost:3.5,active:true},
+  {id:"s_bev_redbull",name:"Red Bull",unit:"unités",cost:3.5,active:true},
+  {id:"s_fut_coca",name:"Fût Coca-Cola",unit:"unités",cost:14,active:true},
+  {id:"s_fut_cocazero",name:"Fût Coca Zéro",unit:"unités",cost:14,active:true},
+  {id:"s_fut_fanta",name:"Fût Fanta",unit:"unités",cost:14,active:true},
+  {id:"s_fut_sprite",name:"Fût Sprite",unit:"unités",cost:14,active:true},
+  {id:"s_fut_fusetea",name:"Fût Fuze Tea",unit:"unités",cost:14,active:true},
+  {id:"s_zz_accident",name:"Plat accident (menu refait)",unit:"unités",cost:15,active:true}
 ];
-const DEMO_SIDE_COST = { s_riz:0.6, s_mais:0.5, s_puree:0.7, s_frites:0.9 };
+const DEMO_SIDE_COST = {};
 
 /* ---------- Utilitaires ---------- */
 const $ = s => document.querySelector(s);
@@ -397,7 +436,7 @@ function LocalStore(){
   if (!events){ events = seedDemo(); LS.set("dc_events", events); }
   return {
     mode:"demo",
-    async loadConfig(){ return { sides:LS.get("dc_sides",DEFAULT_SIDES.map(x=>({...x,cost:DEMO_SIDE_COST[x.id]||0}))), products:LS.get("dc_products",DEFAULT_PRODUCTS.map(p=>({...p,cost:DEMO_COST[p.id]||0}))), restaurants:LS.get("dc_restaurants",DEFAULT_RESTAURANTS), settings:{...DEFAULT_SETTINGS,...LS.get("dc_settings",{})} }; },
+    async loadConfig(){ return { sides:LS.get("dc_sides",DEFAULT_SIDES.map(x=>({...x,cost:DEMO_SIDE_COST[x.id]??x.cost??0}))), products:LS.get("dc_products",DEFAULT_PRODUCTS.map(p=>({...p,cost:DEMO_COST[p.id]||0}))), restaurants:LS.get("dc_restaurants",DEFAULT_RESTAURANTS), settings:{...DEFAULT_SETTINGS,...LS.get("dc_settings",{})} }; },
     async saveProducts(l){ LS.set("dc_products",l); },
     async saveRestaurants(l){ LS.set("dc_restaurants",l); },
     async saveSides(l){ LS.set("dc_sides",l); },
@@ -752,10 +791,10 @@ async function refreshConfig(){
   }catch(e){}
 }
 
-function openSheet(build){
+function openSheet(build,cls){
   const ov=h("div",{class:"ov",onclick:e=>{ if(e.target===ov) close(); }});
   const close=()=>ov.remove();
-  ov.append(h("div",{class:"sheet",role:"dialog","aria-modal":"true"}, build(close)));
+  ov.append(h("div",{class:"sheet"+(cls?" "+cls:""),role:"dialog","aria-modal":"true"}, build(close)));
   document.body.append(ov);
   return close;
 }
@@ -876,31 +915,41 @@ function discardSheet(p){
   ]);
 }
 
+const SIDE_GROUPS=[["acc","🍚 Accompagnements"],["sau","🥫 Sauces & garnitures"],["des","🍮 Desserts"],["bev","🥤 Boissons périmées"],["fut","🛢 Changement de fût"],["zz","⚠️ Autre"]];
+const sideGroup = x => { const m=/^s_(acc|sau|des|bev|fut|zz)_/.exec(x.id); return m?m[1]:(["s_frites","s_mais","s_riz","s_puree"].includes(x.id)?"acc":"zz"); };
 function closingSheet(){
   const r=currentResto(), L=k=>tr(r.lang,k);
   const sides=(CFG.sides||[]).filter(x=>x.active!==false);
   const qty=Object.fromEntries(sides.map(x=>[x.id,0]));
   const step = u => u==="g" ? 50 : 1;
-  const rows=sides.map(x=>{
+  const okBtn=h("button",{class:"act prim"},L("confirm"));
+  const refresh=()=>{ const n=Object.values(qty).filter(v=>v>0).length; okBtn.textContent=L("confirm")+(n?` (${n})`:""); };
+  const row=x=>{
     const out=h("output",{class:"cq"},"0");
-    const set=v=>{ qty[x.id]=Math.max(0,v); out.textContent=qty[x.id]; };
-    return h("div",{class:"crow"},
+    const set=v=>{ qty[x.id]=Math.max(0,v); out.textContent=qty[x.id]; row.el.classList.toggle("has",qty[x.id]>0); refresh(); };
+    const row={el:h("div",{class:"crow"},
       h("div",{class:"cn"},x.name,h("small",{},unitL(r.lang,x.unit))),
       h("button",{class:"cb","aria-label":"moins "+x.name,onclick:()=>set(qty[x.id]-step(x.unit))},"−"), out,
-      h("button",{class:"cb","aria-label":"plus "+x.name,onclick:()=>set(qty[x.id]+step(x.unit))},"+"));
-  });
+      h("button",{class:"cb","aria-label":"plus "+x.name,onclick:()=>set(qty[x.id]+step(x.unit))},"+"))};
+    return row.el;
+  };
+  const body=[];
+  SIDE_GROUPS.forEach(([g,label])=>{ const list=sides.filter(x=>sideGroup(x)===g); if(!list.length) return;
+    body.push(h("div",{class:"cgrp"},label), ...list.map(row)); });
   const lastC=LS.get("dc_last_closing",null), already = lastC && new Date(lastC).toDateString()===new Date().toDateString();
-  openSheet(close=>[
-    h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")),
-    already ? h("div",{class:"alert"},`${L("closing_done")} ${new Date(lastC).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"})}`) : null,
-    h("div",{class:"crows"},rows),
-    h("button",{class:"act prim",onclick:()=>{
+  openSheet(close=>{
+    okBtn.onclick=()=>{
       sides.forEach(x=>{ if(qty[x.id]>0) logEvent(ev("closing",K.restoId,x,x.unit,qty[x.id])); });
       if (Object.values(qty).some(v=>v>0)) LS.set("dc_last_closing",new Date().toISOString());
       close(); toast(L("saved"));
-    }},L("confirm")),
-    h("button",{class:"act ghost",onclick:close},L("back"))
-  ]);
+    };
+    return [
+      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")),
+      already ? h("div",{class:"alert"},`${L("closing_done")} ${new Date(lastC).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"})}`) : null,
+      h("div",{class:"crows"},body),
+      h("div",{class:"sticky-act"}, okBtn, h("button",{class:"act ghost",onclick:close},L("back")))
+    ];
+  },"wide");
 }
 
 function startBatch(p,q){
