@@ -1252,7 +1252,7 @@ function settingsView(box){
       h("label",{class:"f",for:"rn"+i},"Nom",h("input",{id:"rn"+i,value:r.name,oninput:e=>r.name=e.target.value})),
       h("label",{class:"f",for:"rl"+i},"Langue de l'écran cuisine",
         h("select",{id:"rl"+i,onchange:e=>r.lang=e.target.value}, Object.entries(LANGS).map(([k,l])=>h("option",{value:k,selected:r.lang===k},l)))),
-      h("label",{class:"f",for:"ro"+i},"Début de cuisson du poulet",HAS_OPEN?null:h("span",{class:"hint"}," — bientôt modifiable"),h("input",{id:"ro"+i,type:"time",disabled:!HAS_OPEN,value:openTime(r),onchange:e=>{ if(/^\d\d:\d\d$/.test(e.target.value)) r.open_time=e.target.value; }}))))),
+      !HAS_OPEN ? null : h("label",{class:"f",for:"ro"+i},"Début de cuisson du poulet",h("input",{id:"ro"+i,type:"time",value:openTime(r),onchange:e=>{ if(/^\d\d:\d\d$/.test(e.target.value)) r.open_time=e.target.value; }}))))),
     h("h3",{style:{"font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px",margin:"8px 0 10px"}},"Tablettes"),
     (()=>{ const c=h("div",{class:"cards"},h("div",{class:"muted"},"Chargement…"));
       store.listDevices().then(list=>{ c.innerHTML="";
