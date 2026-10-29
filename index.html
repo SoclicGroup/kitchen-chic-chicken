@@ -1391,11 +1391,24 @@ function transferSheet(onDone,defFrom,lockFrom){
       h("div",{class:"sticky-act"},h("div",{class:"tr-sum"},totalEl), okBtn, h("button",{class:"act ghost",onclick:close},"Retour"))];
   },"wide");
 }
+async function transfersPdf(e){
+  if (store.mode==="demo"){ toast("Le PDF se crée une fois l'app en ligne (pas en mode démo)"); return; }
+  const b=e.currentTarget, old=b.textContent; b.disabled=true; b.textContent="Création du PDF…";
+  try{ const [f,t]=periodBounds(A.tper||"d30");
+    const r=await fetch(CONFIG.SUPABASE_URL+"/functions/v1/weekly-report",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+CONFIG.SUPABASE_ANON_KEY,apikey:CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify({mode:"manual",kind:"transfers",pin:A.pin,from:f.toISOString(),to:t.toISOString()})});
+    const j=await r.json().catch(()=>({}));
+    if (!r.ok) throw new Error(j.error||"échec");
+    const url=await store.reportUrl(j.path);
+    toastAction(`📄 PDF prêt (${j.count} transfert${j.count>1?"s":""})`,"Ouvrir",()=>window.open(url,"_blank"));
+  }catch(err){ toast("Échec du PDF : "+(err.message||err)); }
+  b.disabled=false; b.textContent=old;
+}
 async function transfersView(box){
   const P={d7:"7 derniers jours",d30:"30 derniers jours",month:"Ce mois",year:"Cette année",lastyear:"Année dernière"};
   A.tper=A.tper||"d30";
   box.append(h("div",{class:"filters"},
     h("button",{class:"btn prim",onclick:()=>transferSheet(()=>renderAdmin())},"+ Nouveau transfert"),
+    h("button",{class:"btn",onclick:e=>transfersPdf(e)},"📄 PDF détaillé"),
     Object.entries(P).map(([k,l])=>h("button",{class:"chip"+(A.tper===k?" on":""),onclick:()=>{A.tper=k;renderAdmin();}},l))));
   const res=h("div",{class:"empty"},"Chargement…"); box.append(res);
   const [f,t]=periodBounds(A.tper);
@@ -1583,7 +1596,7 @@ async function reportsView(box){
       h("strong",{style:{"font-family":"var(--f-display)","font-size":"22px","text-transform":"uppercase"}},fmtFolder(g)),
       h("span",{class:"pill "+(g.kind==="year"?"p-cook":g.kind==="day"?"p-sift":"p-closing")},g.kind==="year"?"Annuel":g.kind==="day"?"Journal":"Hebdo")),
     h("div",{style:{display:"flex","flex-direction":"column",gap:"6px"}}, g.files.map(f=>{
-      const label=f.name.replace(/^Kitchen-Chic-Chicken_(Semaine|Annuel|Journal)-[\d-]+_/,"").replace(/\.pdf$/,"").replace(/-/g," ");
+      const label=/_Transferts-/.test(f.name) ? "🔄 Transferts" : f.name.replace(/^Kitchen-Chic-Chicken_(Semaine|Annuel|Journal)-[\d-]+_/,"").replace(/\.pdf$/,"").replace(/-/g," ");
       return h("button",{class:"btn",style:{"text-align":"left"},onclick:async e=>{
         const b=e.currentTarget, old=b.textContent; b.textContent="Ouverture…";
         try{ const url=await store.reportUrl(f.path); const a=h("a",{href:url,target:"_blank",rel:"noopener"}); document.body.append(a); a.click(); a.remove(); }
