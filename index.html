@@ -147,6 +147,7 @@ th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line);whi
 th:first-child,td:first-child,th.l,td.l{text-align:left}
 th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface)}
 tr:last-child td{border-bottom:0}
+tr.tot td{border-top:2px solid var(--line);font-weight:800}tr.grp td{background:var(--surface-2);font-weight:800;text-transform:uppercase;font-size:13px;letter-spacing:.04em}
 td.loss{color:var(--danger-text);font-weight:700}
 .dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:8px;vertical-align:-1px}
 .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
@@ -1041,7 +1042,7 @@ function pinScreen(){
 
 /* ----- Statistiques ----- */
 function compute(rows, hourRows, buckets){
-  const T={batches:0,cooked:0,disc:0,chf:0,closeChf:0}, prod=new Map(), resto=new Map(), reasons={}, closing=new Map();
+  const T={batches:0,cooked:0,disc:0,chf:0,closeChf:0}, prod=new Map(), resto=new Map(), rp=new Map(), reasons={}, closing=new Map();
   const proc={n:0,sum:0,ontime:0,late5:0};
   const series=new Map(buckets.map(b=>[b.key,{label:b.label,a:0,b:0}]));
   const hours=Array.from({length:24},()=>({a:0,b:0}));
@@ -1051,7 +1052,7 @@ function compute(rows, hourRows, buckets){
     if (e.type==="sift"){ T.siftN=(T.siftN||0)+n; T.siftPieces=(T.siftPieces||0)+pc; if (e.label==="late") T.siftLate=(T.siftLate||0)+n; continue; }
     if (e.type==="closing"){
       const sd=(CFG.sides||[]).find(x=>x.id===e.product_id), k=e.product_id+"|"+e.label;
-      if (!closing.has(k)) closing.set(k,{name:sd?sd.name:e.product_name,unit:e.label,qty:0,chf:0,n:0});
+      if (!closing.has(k)) closing.set(k,{id:e.product_id,name:sd?sd.name:e.product_name,unit:e.label,qty:0,chf:0,n:0});
       const c=closing.get(k), cc=pc*(Number(sd&&sd.cost)||0)/(e.label==="g"?100:1);
       c.qty+=pc; c.chf+=cc; c.n+=n; T.closeChf+=cc;
       { const rr=CFG.restaurants.find(x=>x.id===e.restaurant_id), R2=get(resto,e.restaurant_id,{name:rr?rr.name:e.restaurant_id}); R2.closeChf=(R2.closeChf||0)+cc; }
@@ -1060,14 +1061,16 @@ function compute(rows, hourRows, buckets){
     const p=prodById(e.product_id), r=CFG.restaurants.find(x=>x.id===e.restaurant_id);
     const P=get(prod,e.product_id,{name:p?p.name:e.product_name,color:p?p.color:"#777"});
     const Rr=get(resto,e.restaurant_id,{name:r?r.name:e.restaurant_id});
+    const RP=get(rp,e.restaurant_id+'|'+e.product_id,{resto:r?r.name:e.restaurant_id,name:p?p.name:e.product_name,color:p?p.color:'#777',ord:CFG.products.findIndex(x=>x.id===e.product_id)});
+    P.r=P.r||{}; RP.r=RP.r||{};
     const S=series.get(e.bucket);
     if (e.type==="cook"||e.type==="cancel"){
       const sg=e.type==="cancel"?-1:1;
-      [T,P,Rr].forEach(o=>{ o.batches+=sg*n; o.cooked+=sg*pc; }); if (S) S.a+=sg*pc;
+      [T,P,Rr,RP].forEach(o=>{ o.batches+=sg*n; o.cooked+=sg*pc; }); if (S) S.a+=sg*pc;
     } else if (e.type==="discard"){
       const c=pc*(Number(p&&p.cost)||0);
-      [T,P,Rr].forEach(o=>{ o.disc+=pc; o.chf+=c; }); if (S) S.b+=pc;
-      const rk=e.reason||"other"; reasons[rk]=(reasons[rk]||0)+pc;
+      [T,P,Rr,RP].forEach(o=>{ o.disc+=pc; o.chf+=c; }); if (S) S.b+=pc;
+      const rk=e.reason||"other"; reasons[rk]=(reasons[rk]||0)+pc; P.r[rk]=(P.r[rk]||0)+pc; RP.r[rk]=(RP.r[rk]||0)+pc;
     }
     if (e.type==="discard"||e.type==="close"){ proc.n+=Number(e.late_n); proc.sum+=Number(e.late_sum); proc.ontime+=Number(e.late_ontime); proc.late5+=Number(e.late5); }
   }
@@ -1079,6 +1082,7 @@ function compute(rows, hourRows, buckets){
   return { T, reasons, proc, closing:[...closing.values()],
     prod:[...prod.entries()].sort((a,b)=>(order.get(a[0])??99)-(order.get(b[0])??99)).map(x=>x[1]),
     resto:[...resto.values()].sort((a,b)=>a.name.localeCompare(b.name)),
+    rp:[...rp.values()].filter(o=>o.batches||o.disc).sort((a,b)=>a.resto.localeCompare(b.resto)||a.ord-b.ord),
     series:[...series.values()],
     hours:hours.map((v,i)=>({label:i+"h",a:v.a,b:v.b})) };
 }
@@ -1216,19 +1220,30 @@ async function statsView(box){
           h("div",{class:"rc-row"},h("span",{},"Perdu"),h("b",{},CHF(o.chf+(o.closeChf||0))))); }))));
   }
 
-  // 4. Produits
-  res.append(h("section",{class:"blk"},h("h3",{},"Par produit"),
-    table(["Produit","Cuites","Vendues","Jetées","% jeté","Perdu"],
-      S.prod.map(o=>{ const p=o.cooked?100*o.disc/o.cooked:0; return h("tr",{},
-        h("td",{},h("i",{class:"dot",style:{background:o.color}}),o.name),
-        h("td",{},fmt(o.cooked)),h("td",{class:"c-ok"},fmt(o.cooked-o.disc)),h("td",{class:"c-bad"},fmt(o.disc)),
-        h("td",{},h("span",{class:"badge sm "+(p<5?"ok":p<10?"warn":"bad")},p.toFixed(1)+" %")),h("td",{class:"c-bad"},CHF(o.chf))); }))));
+  // 4. Produits (détail complet)
+  const pRow=(o,first)=>{ const p=o.cooked?100*o.disc/o.cooked:0, rr=o.r||{}; return h("tr",{},
+      first, h("td",{},fmt(o.batches)), h("td",{},fmt(o.cooked)),h("td",{class:"c-ok"},fmt(o.cooked-o.disc)),h("td",{class:"c-bad"},fmt(o.disc)),
+      ...REASONS.map(k=>h("td",{class:rr[k]?"":"muted"},rr[k]?fmt(rr[k]):"–")),
+      h("td",{},h("span",{class:"badge sm "+(p<5?"ok":p<10?"warn":"bad")},p.toFixed(1)+" %")),h("td",{class:"c-bad"},CHF(o.chf))); };
+  const pCols=["Fournées","Cuites","Vendues","Jetées","⏱ Temps","🔥 Trop cuit","⬇ Tombé","Autre","% jeté","Perdu"];
+  const tot={batches:T.batches,cooked:T.cooked,disc:T.disc,chf:T.chf,r:S.reasons};
+  res.append(h("section",{class:"blk"},h("h3",{},"Par produit"),h("p",{class:"muted sub2"},"Jetées = total, puis le détail : ⏱ temps dépassé · 🔥 trop cuit / sec · ⬇ tombé · autre."),
+    table(["Produit",...pCols],
+      [...S.prod.map(o=>pRow(o,h("td",{},h("i",{class:"dot",style:{background:o.color}}),o.name))),
+       S.prod.length>1 ? (()=>{ const t=pRow(tot,h("td",{},h("b",{},"Total"))); t.className="tot"; return t; })() : null].filter(Boolean))));
+  if (!A.resto && S.rp.length && S.resto.length>1) res.append(h("details",{class:"blk det"},h("summary",{},"Détail par restaurant et par produit"),
+    table(["Restaurant","Produit",...pCols], S.rp.map(o=>pRow(o,[h("td",{},o.resto),h("td",{},h("i",{class:"dot",style:{background:o.color}}),o.name)])))));
 
-  // 5. Fin de service
-  res.append(h("section",{class:"blk"},h("h3",{},"Jeté à la fin du service"),
-    S.closing.length ? table(["Quoi","Quantité jetée","Nombre de soirs","Perdu"],
-      S.closing.sort((a,b)=>b.chf-a.chf||b.qty-a.qty).map(c=>h("tr",{},h("td",{},c.name),h("td",{},`${fmt(c.qty)} ${c.unit==="g"?"g":c.unit}`),h("td",{},fmt(c.n)),h("td",{class:"c-bad"},CHF(c.chf)))))
-    : h("div",{class:"empty"},`Rien n'a été saisi avec « Fin de service » ${perTxt}.`)));
+  // 5. Fin de service (par groupe, sous-totaux)
+  if (S.closing.length){
+    const trs=[]; let grand=0;
+    SIDE_GROUPS.forEach(([g,label])=>{ const list=S.closing.filter(c=>sideGroup({id:c.id})===g).sort((a,b)=>b.chf-a.chf||b.qty-a.qty); if(!list.length) return;
+      const sub=list.reduce((a,c)=>a+c.chf,0); grand+=sub;
+      trs.push(h("tr",{class:"grp"},h("td",{colspan:"3"},label),h("td",{class:"c-bad"},CHF(sub))));
+      list.forEach(c=>trs.push(h("tr",{},h("td",{},c.name),h("td",{},`${fmt(c.qty)} ${c.unit==="g"?"g":c.unit}`),h("td",{},fmt(c.n)),h("td",{class:"c-bad"},CHF(c.chf))))); });
+    trs.push(h("tr",{class:"tot"},h("td",{colspan:"3"},h("b",{},"Total fin de service")),h("td",{class:"c-bad"},h("b",{},CHF(grand)))));
+    res.append(h("section",{class:"blk"},h("h3",{},"Jeté à la fin du service"),table(["Article","Quantité jetée","Nombre de saisies","Perdu"],trs)));
+  } else res.append(h("section",{class:"blk"},h("h3",{},"Jeté à la fin du service"),h("div",{class:"empty"},`Rien n'a été saisi avec « Fin de service » ${perTxt}.`)));
 
   // 6. Pourquoi
   const rTot=Object.values(S.reasons).reduce((a,b)=>a+b,0);
