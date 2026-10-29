@@ -183,6 +183,13 @@ label.chk{display:flex;align-items:center;gap:10px;font-weight:600}
 .dropgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:12px}
 .drop-p{min-height:96px;border:0;border-radius:18px;background:var(--surface-2);border-top:8px solid var(--c);font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;color:var(--fg);padding:10px;touch-action:manipulation}
 .tile{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tr-btn{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:800}
+.tr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tr-other{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
+.tr-q{display:flex;align-items:center;gap:10px}.tr-q input{font-size:22px;font-weight:700}.tr-unit{font-weight:700;white-space:nowrap}
+.tr-val{font-weight:700;margin-top:-4px}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:13px}
+@media (max-width:560px){.tr-grid,.tr-other{grid-template-columns:1fr}}
 .hero{background:var(--surface);border-radius:20px;padding:20px 22px;margin:6px 0 22px;border:1px solid var(--line)}
 .hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .hero h2{margin:0;font-family:var(--f-display);text-transform:uppercase;font-size:26px}
@@ -443,6 +450,9 @@ function LocalStore(){
     async saveSides(l){ LS.set("dc_sides",l); },
     async saveSettings(s){ LS.set("dc_settings",{...LS.get("dc_settings",{}),...s}); },
     async checkPin(pin){ return pin===String(LS.get("dc_settings",{}).pin||DEFAULT_SETTINGS.pin); },
+    async addTransfer(t){ const l=LS.get("dc_transfers",[]); l.push({id:uid(),created_at:new Date().toISOString(),from_resto:t.from,to_resto:t.to,item_id:t.item_id,item_name:t.item_name,unit:t.unit,qty:t.qty,unit_cost:t.unit_cost,note:t.note}); LS.set("dc_transfers",l); },
+    async listTransfers(f,t){ return LS.get("dc_transfers",[]).filter(x=>x.created_at>=f&&x.created_at<t).sort((a,b)=>a.created_at<b.created_at?1:-1); },
+    async deleteTransfer(id){ LS.set("dc_transfers",LS.get("dc_transfers",[]).filter(x=>x.id!==id)); },
     async insertEvents(list){ const ids=new Set(events.map(e=>e.id)); list.forEach(e=>{ if(!ids.has(e.id)) events.push(e); }); LS.set("dc_events",events); },
     async fetchEvents(from,to,resto){ return events.filter(e=>e.created_at>=from && e.created_at<to && (!resto||e.restaurant_id===resto)).sort((a,b)=>a.created_at<b.created_at?-1:1); },
     async fetchAgg(from,to,resto,grain){ return aggLocal(await this.fetchEvents(from,to,resto),grain); },
@@ -489,6 +499,9 @@ function SupaStore(){
     },
     async saveSettings(s){ const ok=chk(await sb.rpc("save_settings",{p_pin:A.pin,p_values:s})); if(!ok) throw new Error("PIN refusé, reconnecte-toi au dashboard"); },
     async checkPin(pin){ return !!chk(await sb.rpc("check_pin",{p_pin:pin})); },
+    async addTransfer(t){ chk(await sb.rpc("add_transfer",{p_pin:A.pin,p_from:t.from,p_to:t.to,p_item_id:t.item_id,p_item_name:t.item_name,p_unit:t.unit,p_qty:t.qty,p_unit_cost:t.unit_cost,p_note:t.note})); },
+    async listTransfers(f,t){ return chk(await sb.rpc("list_transfers",{p_pin:A.pin,p_from:f,p_to:t})); },
+    async deleteTransfer(id){ chk(await sb.rpc("delete_transfer",{p_pin:A.pin,p_id:id})); },
     async insertEvents(list){ chk(await sb.from("events").upsert(list,{onConflict:"id",ignoreDuplicates:true})); },
     async fetchEvents(from,to,resto){
       let all=[];
@@ -1014,16 +1027,18 @@ function renderAdmin(){
       logoEl(),
       h("span",{class:"muted"},"Dashboard"),
       h("span",{class:"sp"}),
+      A.unlocked ? h("button",{class:"chip tr-btn",onclick:()=>transferSheet(()=>{ if(A.tab==="transfers") renderAdmin(); })},"🔄 Transfert") : null,
       h("a",{class:"chip",href:"#cuisine"},"Écran cuisine")));
   if (store.mode==="demo") wrap.append(h("div",{class:"banner"},"Mode démo : données d'exemple, enregistrées seulement sur cet appareil. Une fois Supabase branché, les 4 restaurants et toutes les tablettes partagent les mêmes données."));
   if (!A.unlocked){ wrap.append(pinScreen()); app.append(wrap); return; }
   wrap.append(h("div",{class:"tabs",role:"tablist"},
-    [["stats","📊 Résumé"],["reports","📄 Rapports PDF"],["timers","⏱ Minuteurs"],["settings","⚙️ Réglages"]].map(([k,l])=>
+    [["stats","📊 Résumé"],["transfers","🔄 Transferts"],["reports","📄 Rapports PDF"],["timers","⏱ Minuteurs"],["settings","⚙️ Réglages"]].map(([k,l])=>
       h("button",{class:"chip"+(A.tab===k?" on":""),role:"tab","aria-selected":String(A.tab===k),onclick:()=>{A.tab=k;renderAdmin();}},l))));
   const box=h("div",{}); wrap.append(box); app.append(wrap);
   if (A.tab==="stats") statsView(box);
   else if (A.tab==="timers") timersView(box);
   else if (A.tab==="reports") reportsView(box);
+  else if (A.tab==="transfers") transfersView(box);
   else settingsView(box);
 }
 
@@ -1297,6 +1312,73 @@ function devicesBlock(){
     devicesPanel());
 }
 
+/* ----- Transferts de marchandise (gérant uniquement) ----- */
+function transferItems(){
+  const groups=[["🍗 Poulet", CFG.products.map(p=>({id:p.id,name:p.name,unit:"pièces",cost:Number(p.cost)||0}))]];
+  SIDE_GROUPS.forEach(([g,label])=>{ const l=(CFG.sides||[]).filter(x=>sideGroup(x)===g).map(x=>({id:x.id,name:x.name,unit:x.unit,cost:(Number(x.cost)||0)/(x.unit==="g"?100:1)}));
+    if (l.length) groups.push([label,l]); });
+  return groups;
+}
+function transferSheet(onDone){
+  const items=transferItems(), all=items.flatMap(g=>g[1]);
+  const rs=CFG.restaurants;
+  const fromS=h("select",{id:"tr-from"}, rs.map((r,i)=>h("option",{value:r.id,selected:i===0},r.name)));
+  const toS=h("select",{id:"tr-to"}, rs.map((r,i)=>h("option",{value:r.id,selected:i===1},r.name)));
+  const itemS=h("select",{id:"tr-item"}, items.map(([label,l])=>h("optgroup",{label},l.map(x=>h("option",{value:x.id},x.name)))), h("optgroup",{label:"✏️ Autre"},h("option",{value:"__other"},"Autre article (à écrire)")));
+  const otherName=h("input",{id:"tr-oname",placeholder:"Nom de l'article"}), otherUnit=h("input",{id:"tr-ounit",placeholder:"Unité (ex : cartons)",value:"unités"}), otherCost=h("input",{id:"tr-ocost",type:"number",min:"0",step:"0.05",inputmode:"decimal",placeholder:"Prix par unité (CHF)"});
+  const otherBox=h("div",{class:"tr-other",hidden:true},otherName,otherUnit,otherCost);
+  const qty=h("input",{id:"tr-qty",type:"number",min:"0",step:"any",inputmode:"decimal",placeholder:"0"});
+  const unitL=h("span",{class:"tr-unit"}), val=h("div",{class:"tr-val muted"});
+  const note=h("input",{id:"tr-note",placeholder:"Note (facultatif)",maxlength:"200"});
+  const cur=()=>{ if(itemS.value==="__other") return {id:null,name:otherName.value.trim(),unit:otherUnit.value.trim()||"unités",cost:parseFloat(otherCost.value)||0}; return all.find(x=>x.id===itemS.value); };
+  const upd=()=>{ otherBox.hidden=itemS.value!=="__other"; const it=cur(); unitL.textContent=it?(it.unit==="g"?"grammes":it.unit):""; const q=parseFloat(qty.value)||0; val.textContent=q&&it?`Valeur : ${CHF(q*it.cost)}`:""; };
+  [itemS,qty,otherCost,otherUnit].forEach(e=>e.addEventListener("input",upd)); itemS.addEventListener("change",upd); upd();
+  openSheet(close=>{
+    const save=async e=>{ const b=e.currentTarget, it=cur(), q=parseFloat(qty.value);
+      if (fromS.value===toS.value){ toast("Choisis deux restaurants différents"); return; }
+      if (!it || !it.name){ toast("Choisis ou écris l'article"); return; }
+      if (!(q>0)){ toast("Indique la quantité"); qty.focus(); return; }
+      b.disabled=true;
+      try{ await store.addTransfer({from:fromS.value,to:toS.value,item_id:it.id,item_name:it.name,unit:it.unit,qty:q,unit_cost:it.cost,note:note.value.trim()||null});
+        close(); toast(`🔄 Transfert noté : ${fmt(q)} ${it.unit==="g"?"g":it.unit} ${it.name}`); onDone&&onDone(); }
+      catch(err){ b.disabled=false; toast("Échec : "+(err.message||err)); } };
+    return [h("h2",{},"🔄 Transfert"),h("p",{class:"sub"},"Marchandise envoyée d'un restaurant à un autre."),
+      h("div",{class:"tr-grid"},
+        h("label",{class:"f",for:"tr-from"},"De (qui donne)",fromS),
+        h("label",{class:"f",for:"tr-to"},"Vers (qui reçoit)",toS)),
+      h("label",{class:"f",for:"tr-item"},"Article",itemS), otherBox,
+      h("label",{class:"f",for:"tr-qty"},"Quantité",h("div",{class:"tr-q"},qty,unitL)), val,
+      h("label",{class:"f",for:"tr-note"},"Note",note),
+      h("button",{class:"act prim",onclick:save},"Enregistrer le transfert"),
+      h("button",{class:"act ghost",onclick:close},"Retour")];
+  });
+}
+async function transfersView(box){
+  const P={d7:"7 derniers jours",d30:"30 derniers jours",month:"Ce mois",year:"Cette année",lastyear:"Année dernière"};
+  A.tper=A.tper||"d30";
+  box.append(h("div",{class:"filters"},
+    h("button",{class:"btn prim",onclick:()=>transferSheet(()=>renderAdmin())},"+ Nouveau transfert"),
+    Object.entries(P).map(([k,l])=>h("button",{class:"chip"+(A.tper===k?" on":""),onclick:()=>{A.tper=k;renderAdmin();}},l))));
+  const res=h("div",{class:"empty"},"Chargement…"); box.append(res);
+  const [f,t]=periodBounds(A.tper);
+  let list; try{ list=await store.listTransfers(f.toISOString(),t.toISOString()); }catch(e){ res.textContent="Impossible de charger les transferts : "+(e.message||e); return; }
+  if (!list.length){ res.textContent="Aucun transfert sur cette période. Utilise « + Nouveau transfert » ou le bouton 🔄 Transfert en haut."; return; }
+  res.className=""; res.innerHTML="";
+  const name=id=>(CFG.restaurants.find(r=>r.id===id)||{}).name||id, v=x=>Number(x.qty)*Number(x.unit_cost);
+  const bal=CFG.restaurants.map(r=>{ const out=list.filter(x=>x.from_resto===r.id), inn=list.filter(x=>x.to_resto===r.id);
+    return {r, out:out.reduce((a,x)=>a+v(x),0), inn:inn.reduce((a,x)=>a+v(x),0), nOut:out.length, nIn:inn.length}; });
+  res.append(h("section",{class:"blk"},h("h3",{},"Bilan par restaurant"),h("p",{class:"muted sub2"},"Donné = marchandise envoyée aux autres · Reçu = marchandise reçue des autres."),
+    table(["Restaurant","Donné","Reçu","Solde"], bal.map(b=>h("tr",{},h("td",{},b.r.name),
+      h("td",{class:"c-bad"},`${CHF(b.out)} (${b.nOut})`),h("td",{class:"c-ok"},`${CHF(b.inn)} (${b.nIn})`),
+      h("td",{},h("b",{class:b.inn-b.out>=0?"c-ok":"c-bad"},(b.inn-b.out>=0?"+":"−")+CHF(Math.abs(b.inn-b.out)))))))));
+  res.append(h("section",{class:"blk"},h("h3",{},`Tous les transferts (${list.length})`),
+    table(["Quand","De → Vers","Article","Quantité","Valeur","Note",""], list.map(x=>h("tr",{},
+      h("td",{},new Date(x.created_at).toLocaleString("fr-CH",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})),
+      h("td",{class:"l"},`${name(x.from_resto)} → ${name(x.to_resto)}`),h("td",{class:"l"},x.item_name),
+      h("td",{},`${fmt(Number(x.qty))} ${x.unit==="g"?"g":x.unit}`),h("td",{},CHF(v(x))),h("td",{class:"l muted"},x.note||""),
+      h("td",{},h("button",{class:"btn dang sm",onclick:async e=>{ const b=e.currentTarget; if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent="Confirmer ?"; return; }
+        try{ await store.deleteTransfer(x.id); toast("Transfert supprimé"); renderAdmin(); }catch(err){ toast("Échec : "+(err.message||err)); } }},"Supprimer")))))));
+}
 function exportCSV(events){
   const label={cook:"lance",discard:"jete",cancel:"annule",close:"cloture",closing:"fermeture",sift:"panure_filtree"};
   const rows=[["date","heure","restaurant","produit","action","quantite","pieces","raison","reaction_secondes"]].concat(events.map(e=>{
