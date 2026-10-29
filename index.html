@@ -644,8 +644,7 @@ function renderKitchen(){
       h("span",{id:"clock",class:"clock num"}),
       h("span",{id:"opens",class:"chip opens",hidden:true}),
       h("button",{class:"chip sift-btn",id:"sift-btn",hidden:!siftEvery(),onclick:siftSheet},"🧂 "+L("sift")+" ",h("b",{class:"num"},"…")),
-      (CFG.sides||[]).some(x=>x.active!==false) ? h("button",{class:"chip closing-btn",onclick:closingSheet},"🌙 "+L("closing")) : null,
-      h("a",{class:"chip",href:"#admin"},"Dashboard")
+      (CFG.sides||[]).some(x=>x.active!==false) ? h("button",{class:"chip closing-btn",onclick:closingSheet},"🌙 "+L("closing")) : null
     ),
     h("button",{class:"sift-bar",id:"sift-bar",hidden:true,onclick:siftSheet},h("span",{class:"sb-txt"}),h("span",{class:"sb-cta"},L("sift_btn")+" →")),
     h("button",{class:"snd",id:"snd",hidden:true,onclick:initAudio},"🔊 "+L("snd")),
