@@ -44,7 +44,7 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;padding-bottom:16px;align-content:start}
 .tile{--c:#D6F24A;container-type:inline-size;position:relative;text-align:left;border:0;border-radius:22px;background:var(--surface);padding:22px 20px 20px;min-height:240px;display:flex;flex-direction:column;gap:4px;overflow:hidden;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--c) 40%,transparent);touch-action:manipulation}
 .tile::before{content:"";position:absolute;inset:0 0 auto 0;height:9px;background:var(--c)}
-.t-name{font-family:var(--f-display);font-weight:800;font-size:clamp(36px,12.5cqi,50px);line-height:1.05;text-transform:uppercase;letter-spacing:.02em}
+.t-name{font-family:var(--f-display);font-weight:800;font-size:50px;line-height:1.05;text-transform:uppercase;letter-spacing:0;white-space:nowrap;overflow:hidden}
 .t-cd{font-family:var(--f-display);font-weight:800;font-size:clamp(56px,27cqi,116px);line-height:.95;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted);margin-top:6px}
 .t-sub{font-weight:700;font-size:19px;color:var(--muted)}
 .t-bar{margin-top:auto;height:10px;border-radius:99px;background:var(--surface-2);overflow:hidden}
@@ -737,6 +737,10 @@ function renderKitchen(){
     h("button",{class:"sift-bar",id:"sift-bar",hidden:true,onclick:siftSheet},h("span",{class:"sb-txt"}),h("span",{class:"sb-cta"},L("sift_btn")+" →")),
     h("button",{class:"snd",id:"snd",hidden:true,onclick:initAudio},"🔊 "+L("snd")),
     grid));
+  const fitAll=fitNames;
+  grid.querySelectorAll(".tile").forEach(t=>nameRO&&nameRO.observe(t)); fitAll(); requestAnimationFrame(fitAll);
+  try{ document.fonts&&document.fonts.ready.then(fitAll); document.fonts&&document.fonts.addEventListener("loadingdone",fitAll); }catch(e){}
+  [300,1200,3000].forEach(t=>setTimeout(fitAll,t));
   tick(); updateSync(); refreshSift();
   kIntervals.push(setInterval(tick,250), setInterval(refreshConfig,60000), setInterval(loadHistory,3600000), setInterval(refreshSift,60000));
   if (!K.hist.length) loadHistory();
@@ -756,6 +760,11 @@ function pinPad(inp, go){
   document.addEventListener("keydown",onKey);
   return pad;
 }
+// nom du minuteur sur une seule ligne : le plus grand possible sans couper
+function fitName(el){ if(!el||!el.isConnected||!el.clientWidth) return; const rg=document.createRange(); rg.selectNodeContents(el); let fs=50; el.style.fontSize=fs+"px";
+  while(fs>16 && (rg.getBoundingClientRect().width>el.clientWidth-4 || el.scrollWidth>el.clientWidth)){ fs-=1; el.style.fontSize=fs+"px"; } }
+function fitNames(){ const els=[...document.querySelectorAll(".tile .t-name")]; els.forEach(fitName); }
+const nameRO = typeof ResizeObserver!=="undefined" ? new ResizeObserver(()=>fitNames()) : null;
 function changeRestoSheet(){
   const inp=h("input",{id:"cr-pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"••••"});
   openSheet(close=>{
