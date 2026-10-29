@@ -22,7 +22,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15
 #app{min-height:100%}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-input,select{font:inherit;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;width:100%}
+input,select{min-height:44px;font:inherit;color:var(--fg);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;width:100%}
 input[type=color]{padding:2px;height:44px;width:56px}
 input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .muted{color:var(--muted)}
@@ -34,7 +34,7 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .logo .lg svg,.start-ic svg{width:100%;height:100%}
 .start-ic{width:96px;height:96px;color:var(--fg);background:var(--surface);border-radius:24px;padding:12px}
 .logo b{background:var(--accent);color:var(--accent-ink);padding:1px 8px;border-radius:6px}
-.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;text-decoration:none;color:var(--fg);font-size:14px;white-space:nowrap}
+.chip{min-height:44px;display:inline-flex;align-items:center;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;text-decoration:none;color:var(--fg);font-size:14px;white-space:nowrap}
 .chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .clock{font-family:var(--f-display);font-weight:700;font-size:26px}
 .banner{background:var(--surface-2);border:1px dashed var(--line);color:var(--muted);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:16px}
@@ -126,11 +126,11 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .tabs,.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .filters select{width:auto}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:26px}
-.kpi{background:var(--surface);border-radius:16px;padding:16px}
+.kpi{background:var(--surface);border-radius:16px;padding:16px;container-type:inline-size;min-width:0}
 .kpi .l{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.kpi .v{font-family:var(--f-display);font-weight:800;font-size:46px;line-height:1.05;font-variant-numeric:tabular-nums}
+.kpi .v{font-family:var(--f-display);font-weight:800;font-size:min(46px,21cqi);white-space:nowrap;line-height:1.05;font-variant-numeric:tabular-nums}
 .kpi .h{font-size:12px;color:var(--muted)}
-.kpi.money .v{font-size:32px;line-height:1.25}
+.kpi.money .v{font-size:min(32px,15cqi);white-space:normal;line-height:1.25}
 .filters.custom label.f{width:auto}
 .kpi.sold .v{color:var(--accent)}
 .kpi.loss .v{color:var(--danger-text)}
@@ -165,7 +165,7 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--mu
 label.f .hint{text-transform:none;letter-spacing:0;font-weight:400}
 label.chk{display:flex;align-items:center;gap:10px;font-weight:600}
 .sw{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.sw button{width:32px;height:32px;border-radius:8px;border:2px solid transparent}
+.sw button{width:42px;height:42px;border-radius:8px;border:2px solid transparent}
 .sw button.on{border-color:var(--fg)}
 .row-act{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .btn{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:10px 14px;font-weight:600}
