@@ -166,6 +166,17 @@ label.f .hint{text-transform:none;letter-spacing:0;font-weight:400}
 label.chk{display:flex;align-items:center;gap:10px;font-weight:600}
 .sw{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .snd{display:block;width:100%;margin:0 0 12px;padding:16px;border:0;border-radius:16px;background:#F5B83D;color:#111;font-weight:800;font-size:22px}
+.t-undo{margin-left:14px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;padding:10px 16px;font-size:16px;min-height:44px}
+.toast.act-t{display:flex;align-items:center;gap:6px;font-size:17px;padding:10px 12px 10px 18px}
+.big-act{font-size:22px;min-height:76px}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-bottom:10px}
+.num-b{min-height:72px;border:0;border-radius:16px;background:var(--surface-2);font-family:var(--f-display);font-weight:800;font-size:30px;color:var(--fg);white-space:nowrap;touch-action:manipulation}
+.num-b small{display:block;font-family:var(--f-body);font-size:13px;font-weight:700;margin-top:2px}
+.num-b:active{background:var(--danger);color:#fff}
+.reasons.small .chip{font-size:14px}
+.dropgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.drop-p{min-height:96px;border:0;border-radius:18px;background:var(--surface-2);border-top:8px solid var(--c);font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;color:var(--fg);padding:10px;touch-action:manipulation}
+.tile{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .hero{background:var(--surface);border-radius:20px;padding:20px 22px;margin:6px 0 22px;border:1px solid var(--line)}
 .hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .hero h2{margin:0;font-family:var(--f-display);text-transform:uppercase;font-size:26px}
@@ -222,13 +233,13 @@ const CONFIG = { SUPABASE_URL: "https://oqchxcofsfqbnvafwgpr.supabase.co", SUPAB
 
 const LANGS = { fr:"Français", de:"Deutsch", it:"Italiano", en:"English", pt:"Português", es:"Español", sq:"Shqip" };
 const I18N = {
-  fr:{snd:"Touchez l'écran pour activer le son",start:"Valider ce restaurant",resto:"Restaurant de cette tablette",tap:"Toucher pour lancer",qty:"Quelle quantité ?",pieces:"pièces",back:"Retour",sold:"Tout vendu — arrêter",discard_stop:"Jeter des pièces et arrêter",undo:"Annuler (lancé par erreur)",expired:"TERMINÉ",expired_sub:"Jeter les restes",how_many:"Combien de pièces jetées ?",confirm:"Valider",none:"Aucune",all:"Toutes",running:"En cours",pending:"en attente d'envoi"},
-  de:{snd:"Bildschirm berühren, um den Ton zu aktivieren",start:"Restaurant bestätigen",resto:"Restaurant dieses Tablets",tap:"Tippen zum Starten",qty:"Welche Menge?",pieces:"Stück",back:"Zurück",sold:"Alles verkauft — stoppen",discard_stop:"Stücke wegwerfen und stoppen",undo:"Abbrechen (versehentlich gestartet)",expired:"FERTIG",expired_sub:"Reste wegwerfen",how_many:"Wie viele Stücke weggeworfen?",confirm:"Bestätigen",none:"Keine",all:"Alle",running:"Läuft",pending:"warten auf Versand"},
-  it:{snd:"Tocca lo schermo per attivare il suono",start:"Conferma ristorante",resto:"Ristorante di questo tablet",tap:"Tocca per avviare",qty:"Quale quantità?",pieces:"pezzi",back:"Indietro",sold:"Tutto venduto — ferma",discard_stop:"Butta pezzi e ferma",undo:"Annulla (avviato per errore)",expired:"FINITO",expired_sub:"Butta gli avanzi",how_many:"Quanti pezzi buttati?",confirm:"Conferma",none:"Nessuno",all:"Tutti",running:"In corso",pending:"in attesa di invio"},
-  en:{snd:"Tap the screen to turn on sound",start:"Confirm restaurant",resto:"This tablet's restaurant",tap:"Tap to start",qty:"How many?",pieces:"pieces",back:"Back",sold:"All sold — stop",discard_stop:"Discard pieces and stop",undo:"Cancel (started by mistake)",expired:"DONE",expired_sub:"Discard leftovers",how_many:"How many pieces discarded?",confirm:"Confirm",none:"None",all:"All",running:"Running",pending:"waiting to sync"},
-  pt:{snd:"Toque no ecrã para ativar o som",start:"Confirmar restaurante",resto:"Restaurante deste tablet",tap:"Toque para iniciar",qty:"Que quantidade?",pieces:"peças",back:"Voltar",sold:"Tudo vendido — parar",discard_stop:"Deitar fora e parar",undo:"Cancelar (iniciado por engano)",expired:"TERMINADO",expired_sub:"Deitar fora o resto",how_many:"Quantas peças deitadas fora?",confirm:"Confirmar",none:"Nenhuma",all:"Todas",running:"Em curso",pending:"à espera de envio"},
-  es:{snd:"Toca la pantalla para activar el sonido",start:"Confirmar restaurante",resto:"Restaurante de esta tableta",tap:"Toca para iniciar",qty:"¿Qué cantidad?",pieces:"piezas",back:"Volver",sold:"Todo vendido — parar",discard_stop:"Tirar piezas y parar",undo:"Cancelar (iniciado por error)",expired:"TERMINADO",expired_sub:"Tirar lo que sobra",how_many:"¿Cuántas piezas tiradas?",confirm:"Confirmar",none:"Ninguna",all:"Todas",running:"En curso",pending:"pendiente de envío"},
-  sq:{snd:"Prek ekranin për të aktivizuar zërin",start:"Konfirmo restorantin",resto:"Restoranti i këtij tableti",tap:"Prek për të nisur",qty:"Sa copë?",pieces:"copë",back:"Kthehu",sold:"Shitur të gjitha — ndalo",discard_stop:"Hidh copë dhe ndalo",undo:"Anulo (nisur gabimisht)",expired:"MBAROI",expired_sub:"Hidh mbetjet",how_many:"Sa copë u hodhën?",confirm:"Konfirmo",none:"Asnjë",all:"Të gjitha",running:"Në vazhdim",pending:"në pritje"}
+  fr:{drop:"Jeter",which:"Quel produit ?",undo_s:"Annuler",relaunched:"relancé",none_relaunch:"Rien jeté · relancer",none_stop:"Rien jeté · arrêter",relaunch_with:"Relancer avec une autre quantité",tap_relaunch:"toucher = relancer",snd:"Touchez l'écran pour activer le son",start:"Valider ce restaurant",resto:"Restaurant de cette tablette",tap:"Toucher pour lancer",qty:"Quelle quantité ?",pieces:"pièces",back:"Retour",sold:"Tout vendu — arrêter",discard_stop:"Jeter des pièces et arrêter",undo:"Annuler (lancé par erreur)",expired:"TERMINÉ",expired_sub:"Jeter les restes",how_many:"Combien de pièces jetées ?",confirm:"Valider",none:"Aucune",all:"Toutes",running:"En cours",pending:"en attente d'envoi"},
+  de:{drop:"Wegwerfen",which:"Welches Produkt?",undo_s:"Rückgängig",relaunched:"neu gestartet",none_relaunch:"Nichts weg · neu starten",none_stop:"Nichts weg · stoppen",relaunch_with:"Mit anderer Menge neu starten",tap_relaunch:"tippen = neu starten",snd:"Bildschirm berühren, um den Ton zu aktivieren",start:"Restaurant bestätigen",resto:"Restaurant dieses Tablets",tap:"Tippen zum Starten",qty:"Welche Menge?",pieces:"Stück",back:"Zurück",sold:"Alles verkauft — stoppen",discard_stop:"Stücke wegwerfen und stoppen",undo:"Abbrechen (versehentlich gestartet)",expired:"FERTIG",expired_sub:"Reste wegwerfen",how_many:"Wie viele Stücke weggeworfen?",confirm:"Bestätigen",none:"Keine",all:"Alle",running:"Läuft",pending:"warten auf Versand"},
+  it:{drop:"Buttare",which:"Quale prodotto?",undo_s:"Annulla",relaunched:"riavviato",none_relaunch:"Niente buttato · riavvia",none_stop:"Niente buttato · ferma",relaunch_with:"Riavvia con un’altra quantità",tap_relaunch:"tocca = riavvia",snd:"Tocca lo schermo per attivare il suono",start:"Conferma ristorante",resto:"Ristorante di questo tablet",tap:"Tocca per avviare",qty:"Quale quantità?",pieces:"pezzi",back:"Indietro",sold:"Tutto venduto — ferma",discard_stop:"Butta pezzi e ferma",undo:"Annulla (avviato per errore)",expired:"FINITO",expired_sub:"Butta gli avanzi",how_many:"Quanti pezzi buttati?",confirm:"Conferma",none:"Nessuno",all:"Tutti",running:"In corso",pending:"in attesa di invio"},
+  en:{drop:"Discard",which:"Which product?",undo_s:"Undo",relaunched:"restarted",none_relaunch:"Nothing wasted · restart",none_stop:"Nothing wasted · stop",relaunch_with:"Restart with another quantity",tap_relaunch:"tap = restart",snd:"Tap the screen to turn on sound",start:"Confirm restaurant",resto:"This tablet's restaurant",tap:"Tap to start",qty:"How many?",pieces:"pieces",back:"Back",sold:"All sold — stop",discard_stop:"Discard pieces and stop",undo:"Cancel (started by mistake)",expired:"DONE",expired_sub:"Discard leftovers",how_many:"How many pieces discarded?",confirm:"Confirm",none:"None",all:"All",running:"Running",pending:"waiting to sync"},
+  pt:{drop:"Deitar fora",which:"Que produto?",undo_s:"Anular",relaunched:"reiniciado",none_relaunch:"Nada deitado fora · reiniciar",none_stop:"Nada deitado fora · parar",relaunch_with:"Reiniciar com outra quantidade",tap_relaunch:"tocar = reiniciar",snd:"Toque no ecrã para ativar o som",start:"Confirmar restaurante",resto:"Restaurante deste tablet",tap:"Toque para iniciar",qty:"Que quantidade?",pieces:"peças",back:"Voltar",sold:"Tudo vendido — parar",discard_stop:"Deitar fora e parar",undo:"Cancelar (iniciado por engano)",expired:"TERMINADO",expired_sub:"Deitar fora o resto",how_many:"Quantas peças deitadas fora?",confirm:"Confirmar",none:"Nenhuma",all:"Todas",running:"Em curso",pending:"à espera de envio"},
+  es:{drop:"Tirar",which:"¿Qué producto?",undo_s:"Deshacer",relaunched:"reiniciado",none_relaunch:"Nada tirado · reiniciar",none_stop:"Nada tirado · parar",relaunch_with:"Reiniciar con otra cantidad",tap_relaunch:"tocar = reiniciar",snd:"Toca la pantalla para activar el sonido",start:"Confirmar restaurante",resto:"Restaurante de esta tableta",tap:"Toca para iniciar",qty:"¿Qué cantidad?",pieces:"piezas",back:"Volver",sold:"Todo vendido — parar",discard_stop:"Tirar piezas y parar",undo:"Cancelar (iniciado por error)",expired:"TERMINADO",expired_sub:"Tirar lo que sobra",how_many:"¿Cuántas piezas tiradas?",confirm:"Confirmar",none:"Ninguna",all:"Todas",running:"En curso",pending:"pendiente de envío"},
+  sq:{drop:"Hidh",which:"Cili produkt?",undo_s:"Anulo",relaunched:"rinisur",none_relaunch:"Asgjë e hedhur · rinis",none_stop:"Asgjë e hedhur · ndalo",relaunch_with:"Rinis me sasi tjetër",tap_relaunch:"prek = rinis",snd:"Prek ekranin për të aktivizuar zërin",start:"Konfirmo restorantin",resto:"Restoranti i këtij tableti",tap:"Prek për të nisur",qty:"Sa copë?",pieces:"copë",back:"Kthehu",sold:"Shitur të gjitha — ndalo",discard_stop:"Hidh copë dhe ndalo",undo:"Anulo (nisur gabimisht)",expired:"MBAROI",expired_sub:"Hidh mbetjet",how_many:"Sa copë u hodhën?",confirm:"Konfirmo",none:"Asnjë",all:"Të gjitha",running:"Në vazhdim",pending:"në pritje"}
 };
 const I18N_X = {
   fr:{reason:"Pourquoi ?",r_time:"Temps dépassé",r_overcooked:"Trop cuit / sec",r_dropped:"Tombé",r_other:"Autre",advice:"Conseillé"},
@@ -632,7 +643,7 @@ function renderKitchen(){
   if (!K.started){ K.started=true; initAudio(); requestWake(); loadHistory(); heartbeat(); }
   const L=k=>tr(r.lang,k);
   const grid=h("div",{class:"grid"}, CFG.products.filter(p=>p.active!==false || K.timers[p.id]).map(p=>
-    h("button",{class:"tile","data-id":p.id,style:{"--c":p.color},onclick:()=>onTile(p)},
+    h("button",{class:"tile","data-id":p.id,style:{"--c":p.color},onclick:()=>onTile(p),onpointerdown:()=>tileDown(p),onpointerup:tileUp,onpointerleave:tileUp,onpointercancel:tileUp,oncontextmenu:e=>e.preventDefault()},
       h("div",{class:"t-name"},p.name), h("div",{class:"t-cd"},"--:--"), h("div",{class:"t-sub"}), h("div",{class:"t-bar"},h("i"))
     )));
   app.append(h("div",{class:"k"},
@@ -643,6 +654,7 @@ function renderKitchen(){
       h("span",{id:"sync",class:"muted"}),
       h("span",{id:"clock",class:"clock num"}),
       h("span",{id:"opens",class:"chip opens",hidden:true}),
+      h("button",{class:"chip drop-btn",onclick:dropSheet},"🗑 "+L("drop")),
       h("button",{class:"chip sift-btn",id:"sift-btn",hidden:!siftEvery(),onclick:siftSheet},"🧂 "+L("sift")+" ",h("b",{class:"num"},"…")),
       (CFG.sides||[]).some(x=>x.active!==false) ? h("button",{class:"chip closing-btn",onclick:closingSheet},"🌙 "+L("closing")) : null
     ),
@@ -713,7 +725,7 @@ function tick(){
     else if (now<tm.end){
       el.classList.add("run"); if (tm.end-now<60000) el.classList.add("warn");
       cd.textContent=mmss(tm.end-now);
-      sub.textContent=(tm.label!==String(tm.pieces)?tm.label+" · ":"")+tm.pieces+" "+L("pieces");
+      sub.textContent=(tm.label!==String(tm.pieces)?tm.label+" · ":"")+tm.pieces+" "+L("pieces")+" · "+L("tap_relaunch");
       bar.style.width=(100*(now-tm.start)/(tm.end-tm.start)).toFixed(1)+"%";
     } else {
       el.classList.add("exp"); cd.textContent="+"+mmss(now-tm.end); sub.textContent=L("expired")+" · "+L("expired_sub");
@@ -748,27 +760,97 @@ function openSheet(build){
   return close;
 }
 
+function qtyBtn(p,q,rec,onPick){
+  return h("button",{class:"big"+(String(q.label).length>5?" long":String(q.label).length>3?" mid":"")+(q.label===rec?" rec":""),onclick:onPick},
+    q.label===rec ? h("span",{class:"tag"},"★ "+tr(currentResto().lang,"advice")) : null,
+    q.label, h("small",{}, q.label===String(q.pieces) ? tr(currentResto().lang,"pieces") : q.pieces+" "+tr(currentResto().lang,"pieces")));
+}
+function toastAction(msg,label,fn){
+  document.querySelectorAll(".toast.act-t").forEach(t=>t.remove());
+  const t=h("div",{class:"toast act-t",role:"status"},h("span",{},msg),h("button",{class:"t-undo",onclick:()=>{ t.remove(); fn(); }},label));
+  document.body.append(t); setTimeout(()=>t.remove(),7000);
+}
+function launch(p,q){
+  const L=k=>tr(currentResto().lang,k);
+  startBatch(p,q);
+  toastAction(`▶ ${p.name} · ${q.label}`, L("undo_s"), ()=>cancelBatch(p));
+}
+function relaunch(p,q){
+  const L=k=>tr(currentResto().lang,k), old={...K.timers[p.id]};
+  endBatch(p,0); startBatch(p,q);
+  toastAction(`🔁 ${p.name} · ${q.label} ${L("relaunched")}`, L("undo_s"), ()=>{ cancelBatch(p); K.timers[p.id]=old; saveTimers(); tick(); });
+}
+let lpTimer=null, lpFired=false;
+function tileDown(p){ lpFired=false; clearTimeout(lpTimer); lpTimer=setTimeout(()=>{ if(K.timers[p.id]){ lpFired=true; try{navigator.vibrate&&navigator.vibrate(40);}catch(e){} tileMenu(p); } },600); }
+function tileUp(){ clearTimeout(lpTimer); }
 function onTile(p){
   initAudio();
+  if (lpFired){ lpFired=false; return; }
   const r=currentResto(), L=k=>tr(r.lang,k), tm=K.timers[p.id];
   if (!tm){
     const rec=advise(p);
     openSheet(close=>[
       h("h2",{},p.name), h("p",{class:"sub"},L("qty")),
-      h("div",{class:"qty"}, p.quantities.map(q=>h("button",{class:"big"+(String(q.label).length>5?" long":String(q.label).length>3?" mid":"")+(q.label===rec?" rec":""),onclick:()=>{ close(); startBatch(p,q); }},
-        q.label===rec ? h("span",{class:"tag"},"★ "+L("advice")) : null,
-        q.label, h("small",{}, q.label===String(q.pieces) ? L("pieces") : q.pieces+" "+L("pieces"))))),
+      h("div",{class:"qty"}, p.quantities.map(q=>qtyBtn(p,q,rec,()=>{ close(); launch(p,q); }))),
       h("button",{class:"act ghost",onclick:close},L("back"))
     ]);
   } else if (Date.now()<tm.end){
-    openSheet(close=>[
-      h("h2",{},p.name), h("p",{class:"sub"},`${L("running")} · ${tm.pieces} ${L("pieces")} · ${mmss(tm.end-Date.now())}`),
-      h("button",{class:"act prim",onclick:()=>{ close(); endBatch(p,0); }},L("sold")),
-      h("button",{class:"act",onclick:()=>{ close(); discardSheet(p); }},L("discard_stop")),
-      h("button",{class:"act dang",onclick:e=>{ const b=e.currentTarget; if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent=L("undo_confirm")+" ✓"; b.style.background="var(--danger)"; b.style.color="#fff"; return; } close(); cancelBatch(p); }},L("undo")),
-      h("button",{class:"act ghost",onclick:close},L("back"))
-    ]);
-  } else discardSheet(p);
+    // un toucher pendant la cuisson = nouvelles pièces chaudes : on relance tout de suite
+    relaunch(p,{label:tm.label,pieces:tm.pieces});
+  } else expiredSheet(p);
+}
+// minuteur terminé : une seule touche
+function expiredSheet(p){
+  const r=currentResto(), L=k=>tr(r.lang,k), tm=K.timers[p.id]; if(!tm) return;
+  const max=tm.pieces; let reason="time";
+  const nums=[...new Set([1,2,3,4,5,6,Math.round(max/4),Math.round(max/2),max])].filter(v=>v>=1&&v<=max).sort((a,b)=>a-b);
+  const rbox=h("div",{class:"quick reasons small"});
+  const drawR=()=>{ rbox.innerHTML=""; REASONS.forEach(k=>rbox.append(h("button",{class:"chip"+(reason===k?" on":""),"data-r":k,onclick:()=>{reason=k;drawR();}},L("r_"+k)))); };
+  drawR();
+  openSheet(close=>[
+    h("h2",{},p.name+" · "+L("expired")),
+    h("button",{class:"act prim big-act",onclick:()=>{ close(); relaunch(p,{label:tm.label,pieces:tm.pieces}); }},"🔁 "+L("none_relaunch")+" "+tm.label),
+    h("button",{class:"act",onclick:()=>{ close(); endBatch(p,0); }},"✓ "+L("none_stop")),
+    h("p",{class:"sub",style:{margin:"14px 0 6px"}},"🗑 "+L("how_many")),
+    h("div",{class:"numgrid"}, nums.map(v=>h("button",{class:"num-b",onclick:()=>{ close(); endBatch(p,v,reason); toast(`🗑 ${v} · ${p.name}`); }}, String(v), v===max?h("small",{},L("all")):null))),
+    rbox,
+    h("button",{class:"act ghost",onclick:close},L("back"))
+  ]);
+}
+// appui long : options rares
+function tileMenu(p){
+  const r=currentResto(), L=k=>tr(r.lang,k), tm=K.timers[p.id]; if(!tm) return;
+  openSheet(close=>[
+    h("h2",{},p.name), h("p",{class:"sub"},L("relaunch_with")),
+    h("div",{class:"qty"}, p.quantities.map(q=>qtyBtn(p,q,null,()=>{ close(); relaunch(p,q); }))),
+    h("button",{class:"act",onclick:()=>{ close(); endBatch(p,0); }},L("sold")),
+    h("button",{class:"act",onclick:()=>{ close(); discardSheet(p); }},L("discard_stop")),
+    h("button",{class:"act dang",onclick:e=>{ const b=e.currentTarget; if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent=L("undo_confirm")+" ✓"; b.style.background="var(--danger)"; b.style.color="#fff"; return; } close(); cancelBatch(p); }},L("undo")),
+    h("button",{class:"act ghost",onclick:close},L("back"))
+  ]);
+}
+// bouton 🗑 Jeter : une pièce tombée, etc.
+function dropSheet(){
+  const r=currentResto(), L=k=>tr(r.lang,k);
+  const prods=CFG.products.filter(p=>p.active!==false || K.timers[p.id]);
+  let reason="dropped";
+  openSheet(close=>{
+    const body=h("div",{});
+    const step1=()=>{ body.innerHTML="";
+      body.append(h("h2",{},"🗑 "+L("drop")), h("p",{class:"sub"},L("which")),
+        h("div",{class:"dropgrid"}, prods.map(p=>h("button",{class:"drop-p",style:{"--c":p.color},onclick:()=>step2(p)},p.name))),
+        h("button",{class:"act ghost",onclick:close},L("back"))); };
+    const step2=p=>{ body.innerHTML=""; const tm=K.timers[p.id];
+      const rbox=h("div",{class:"quick reasons small"});
+      const drawR=()=>{ rbox.innerHTML=""; REASONS.filter(k=>k!=="time").forEach(k=>rbox.append(h("button",{class:"chip"+(reason===k?" on":""),"data-r":k,onclick:()=>{reason=k;drawR();}},L("r_"+k)))); };
+      drawR();
+      body.append(h("h2",{},"🗑 "+p.name), h("p",{class:"sub"},L("how_many")),
+        h("div",{class:"numgrid"}, [1,2,3,4,5,6,8,10].map(v=>h("button",{class:"num-b",onclick:()=>{
+          logEvent(ev("discard",K.restoId,p,tm?tm.label:"",v,null,{reason}));
+          close(); toast(`🗑 ${v} · ${p.name}`); }},String(v)))),
+        rbox, h("button",{class:"act ghost",onclick:step1},L("back"))); };
+    step1(); return [body];
+  });
 }
 
 function discardSheet(p){
