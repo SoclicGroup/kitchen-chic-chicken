@@ -184,6 +184,7 @@ label.chk{display:flex;align-items:center;gap:10px;font-weight:600}
 .drop-p{min-height:96px;border:0;border-radius:18px;background:var(--surface-2);border-top:8px solid var(--c);font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;color:var(--fg);padding:10px;touch-action:manipulation}
 .tile{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .tr-btn{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:800}
+.tr-fixed{min-height:44px;display:flex;align-items:center;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);font-weight:800}
 .tr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tr-other{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
 .tr-q{display:flex;align-items:center;gap:10px}.tr-q input{font-size:22px;font-weight:700}.tr-unit{font-weight:700;white-space:nowrap}
@@ -1323,7 +1324,7 @@ function kitchenTransfer(){
       if(!ok){ toast("Code incorrect"); inp.value=""; inp.focus(); return; }
       const pin=inp.value; close();
       A.pin=pin; clearTimeout(trPinTimer); trPinTimer=setTimeout(()=>{ if(!A.unlocked) A.pin=null; },120000);
-      transferSheet(()=>{ if(!A.unlocked) A.pin=null; }, K.restoId); };
+      transferSheet(()=>{ if(!A.unlocked) A.pin=null; }, K.restoId, true); };
     inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); }); setTimeout(()=>inp.focus(),50);
     return [h("h2",{},"🔄 Transfert"),h("p",{class:"sub"},"Réservé au gérant : entre ton code."),
       h("label",{class:"f",for:"ktr-pin"},"Code",inp),
@@ -1336,12 +1337,14 @@ function transferItems(){
     if (l.length) groups.push([label,l]); });
   return groups;
 }
-function transferSheet(onDone,defFrom){
+function transferSheet(onDone,defFrom,lockFrom){
   const items=transferItems(), all=items.flatMap(g=>g[1]);
   const rs=CFG.restaurants;
-  const f0=defFrom||rs[0].id, t0=(rs.find(r=>r.id!==f0)||rs[0]).id;
-  const fromS=h("select",{id:"tr-from"}, rs.map(r=>h("option",{value:r.id,selected:r.id===f0},r.name)));
-  const toS=h("select",{id:"tr-to"}, rs.map(r=>h("option",{value:r.id,selected:r.id===t0},r.name)));
+  const f0=defFrom||rs[0].id;
+  const fromS=h("select",{id:"tr-from",disabled:!!lockFrom}, rs.map(r=>h("option",{value:r.id,selected:r.id===f0},r.name)));
+  const toS=h("select",{id:"tr-to"});
+  const fillTo=()=>{ const keep=toS.value; toS.innerHTML=""; rs.filter(r=>r.id!==fromS.value).forEach(r=>toS.append(h("option",{value:r.id,selected:r.id===keep},r.name))); };
+  fromS.addEventListener("change",fillTo); fillTo();
   const itemS=h("select",{id:"tr-item"}, items.map(([label,l])=>h("optgroup",{label},l.map(x=>h("option",{value:x.id},x.name)))), h("optgroup",{label:"✏️ Autre"},h("option",{value:"__other"},"Autre article (à écrire)")));
   const otherName=h("input",{id:"tr-oname",placeholder:"Nom de l'article"}), otherUnit=h("input",{id:"tr-ounit",placeholder:"Unité (ex : cartons)",value:"unités"}), otherCost=h("input",{id:"tr-ocost",type:"number",min:"0",step:"0.05",inputmode:"decimal",placeholder:"Prix par unité (CHF)"});
   const otherBox=h("div",{class:"tr-other",hidden:true},otherName,otherUnit,otherCost);
@@ -1362,7 +1365,7 @@ function transferSheet(onDone,defFrom){
       catch(err){ b.disabled=false; toast("Échec : "+(err.message||err)); } };
     return [h("h2",{},"🔄 Transfert"),h("p",{class:"sub"},"Marchandise envoyée d'un restaurant à un autre."),
       h("div",{class:"tr-grid"},
-        h("label",{class:"f",for:"tr-from"},"De (qui donne)",fromS),
+        lockFrom ? h("div",{class:"f"},"De (qui donne)",h("div",{class:"tr-fixed",id:"tr-from-fixed"},"🏪 "+(rs.find(r=>r.id===f0)||{}).name),h("span",{hidden:true},fromS)) : h("label",{class:"f",for:"tr-from"},"De (qui donne)",fromS),
         h("label",{class:"f",for:"tr-to"},"Vers (qui reçoit)",toS)),
       h("label",{class:"f",for:"tr-item"},"Article",itemS), otherBox,
       h("label",{class:"f",for:"tr-qty"},"Quantité",h("div",{class:"tr-q"},qty,unitL)), val,
