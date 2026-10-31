@@ -75,7 +75,8 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .big{min-height:96px;border-radius:18px;border:0;background:var(--surface-2);font-family:var(--f-display);font-weight:800;font-size:40px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;touch-action:manipulation}
 .big{padding:8px 6px;min-width:0;overflow:hidden;font-variant-numeric:tabular-nums;white-space:nowrap}.big.mid{font-size:32px}.big.long{font-size:22px}
 .big small{font-family:var(--f-body);font-size:14px;font-weight:600;color:var(--muted);margin-top:6px}
-.k .top .chip{min-height:52px;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;font-size:16px}
+.k .top .chip{min-height:52px;display:inline-flex;align-items:center;gap:6px;padding:10px 14px;font-size:16px}
+.k .top{gap:8px}.k .top #sift-btn b{display:inline-block;min-width:7.5ch;text-align:right}.k .top .clock{display:inline-block;min-width:5ch;text-align:center}
 .closing-btn{background:var(--surface-2)}
 .crows{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:8px}
 .sheet.wide{max-width:1100px}
@@ -252,6 +253,7 @@ input.pinbox{text-align:center;font-size:34px;letter-spacing:.35em;caret-color:t
 .w-disp{font-family:var(--f-display);font-size:56px;font-weight:800;text-align:center;background:var(--surface-2);border-radius:16px;padding:8px}
 .w-res{text-align:center;font-weight:800;font-size:19px;color:var(--muted);padding:6px}.w-res.good{color:var(--ok)}.w-res.bad{color:var(--danger)}
 @media (max-width:480px){.w-tare{font-size:18px;min-height:70px}.w-disp{font-size:44px}}
+.opens-bar{margin:0 0 12px;padding:10px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-weight:800;font-size:18px;color:var(--accent);text-align:center}
 </style>
 
 <div id="app"></div>
@@ -407,11 +409,16 @@ function ev(type, restoId, p, label, pieces, date, extra){
 }
 const p2 = n => String(n).padStart(2,"0");
 const dayKey = d => `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+// journée de service : de 2h du matin à 2h du matin (ce qui est saisi après minuit compte pour la veille)
+const SVC_SHIFT_H = 2;
+const svcDate = d => new Date(d.getTime()-SVC_SHIFT_H*3600000);
+const svcKey = d => dayKey(svcDate(d));
+const svcStart = (d=new Date()) => { const x=svcDate(d); x.setHours(SVC_SHIFT_H,0,0,0); return x; };
 function aggLocal(events, grain){
   const m=new Map();
   for (const e of events){
     const d=new Date(e.created_at);
-    const bucket = grain==="hour" ? String(d.getHours()) : grain==="month" ? dayKey(d).slice(0,7) : dayKey(d);
+    const bucket = grain==="hour" ? String(d.getHours()) : grain==="month" ? svcKey(d).slice(0,7) : svcKey(d);
     const k=[bucket,e.restaurant_id,e.product_id,e.type,e.reason||"",e.label||""].join("|");
     const r=m.get(k)||{bucket,restaurant_id:e.restaurant_id,product_id:e.product_id,product_name:e.product_name,type:e.type,reason:e.reason||null,label:e.label||null,n:0,pieces:0,late_n:0,late_sum:0,late_ontime:0,late5:0};
     r.n++; r.pieces+=e.pieces;
@@ -669,13 +676,13 @@ async function loadHistory(){
 /* Conseil : demande moyenne vendue pendant la durée de maintien, même jour de semaine, 4 dernières semaines */
 function advise(p){
   const hist=K.hist||[]; if (!hist.length || !p.quantities.length) return null;
-  const now=new Date(), dow=now.getDay(), m0=now.getHours()*60+now.getMinutes(), m1=m0+p.minutes;
+  const now=new Date(), dow=svcDate(now).getDay(), m0=now.getHours()*60+now.getMinutes(), m1=m0+p.minutes;
   const days=new Set(); let net=0;
   for (const e of hist){
     if (e.product_id!==p.id) continue;
-    const d=new Date(e.created_at); if (d.getDay()!==dow) continue;
-    if (d.toDateString()===now.toDateString()) continue;
-    days.add(d.toDateString());
+    const d=new Date(e.created_at); if (svcDate(d).getDay()!==dow) continue;
+    if (svcKey(d)===svcKey(now)) continue;
+    days.add(svcKey(d));
     const m=d.getHours()*60+d.getMinutes();
     if ((e.type==="cook"||e.type==="cancel") && m>=m0 && m<m1) net += (e.type==="cook"?1:-1)*e.pieces;
     if (e.type==="discard" && m>=m0+p.minutes && m<m1+p.minutes+10) net -= e.pieces;
@@ -688,7 +695,7 @@ function advise(p){
 let kIntervals=[], audio=null, wake=null;
 var HAS_OPEN=true;
 const openTime = r => /^\d\d:\d\d$/.test((r&&r.open_time)||"") ? r.open_time : "10:45";
-const openToday = r => { const [hh,mm]=openTime(r).split(":").map(Number), d=new Date(); d.setHours(hh,mm,0,0); return d; };
+const openToday = r => { const [hh,mm]=openTime(r).split(":").map(Number), d=svcDate(new Date()); d.setHours(hh,mm,0,0); return d; };
 const currentResto = () => CFG && CFG.restaurants.find(r=>r.id===K.restoId);
 const saveTimers = () => LS.set("dc_timers", K.timers);
 
@@ -728,12 +735,12 @@ function renderKitchen(){
       h("span",{class:"sp"}),
       h("span",{id:"sync",class:"muted"}),
       h("span",{id:"clock",class:"clock num"}),
-      h("span",{id:"opens",class:"chip opens",hidden:true}),
       h("button",{class:"chip drop-btn",onclick:dropSheet},"🗑 "+L("drop")),
       h("button",{class:"chip k-tr-btn",onclick:kitchenTransfer},"🔄 Transfert"),
       h("button",{class:"chip sift-btn",id:"sift-btn",hidden:!siftEvery(),onclick:siftSheet},"🧂 "+L("sift")+" ",h("b",{class:"num"},"…")),
       (CFG.sides||[]).some(x=>x.active!==false) ? h("button",{class:"chip closing-btn",onclick:closingSheet},"🌙 "+L("closing")) : null
     ),
+    h("div",{id:"opens",class:"opens-bar",hidden:true}),
     h("button",{class:"sift-bar",id:"sift-bar",hidden:true,onclick:siftSheet},h("span",{class:"sb-txt"}),h("span",{class:"sb-cta"},L("sift_btn")+" →")),
     h("button",{class:"snd",id:"snd",hidden:true,onclick:initAudio},"🔊 "+L("snd")),
     grid));
@@ -1025,7 +1032,7 @@ function closingSheet(){
   const body=[];
   SIDE_GROUPS.forEach(([g,label])=>{ const list=sides.filter(x=>sideGroup(x)===g); if(!list.length) return;
     body.push(h("div",{class:"cgrp"},label), ...list.map(row)); });
-  const lastC=LS.get("dc_last_closing",null), already = lastC && new Date(lastC).toDateString()===new Date().toDateString();
+  const lastC=LS.get("dc_last_closing",null), already = lastC && svcKey(new Date(lastC))===svcKey(new Date());
   openSheet(close=>{
     okBtn.onclick=()=>{
       sides.forEach(x=>{ if(qty[x.id]>0) logEvent(ev("closing",K.restoId,x,x.unit,qty[x.id])); });
@@ -1066,10 +1073,11 @@ function cancelBatch(p){
    ========================================================= */
 const A = { unlocked:false, tab:"stats", resto:"", period:"today" };
 const PERIODS = { today:"Aujourd'hui", yesterday:"Hier", d7:"7 jours", d30:"30 jours", month:"Ce mois", year:"Cette année", lastyear:"Année dernière", custom:"Dates…" };
-const todayStr = () => dayKey(new Date());
+const todayStr = () => svcKey(new Date());
 if (!A.from){ const d=new Date(); d.setDate(d.getDate()-89); A.from=dayKey(d); A.to=todayStr(); }
-function periodBounds(k){
-  const sod=new Date(); sod.setHours(0,0,0,0);
+function periodBounds(k){ return periodBounds0(k).map(d=>new Date(d.getTime()+SVC_SHIFT_H*3600000)); }
+function periodBounds0(k){
+  const sod=svcDate(new Date()); sod.setHours(0,0,0,0);
   const add=(d,n)=>{ const x=new Date(d); x.setDate(x.getDate()+n); return x; };
   const y=sod.getFullYear();
   switch(k){
@@ -1204,7 +1212,7 @@ function devState(d){
 function openPanel(){
   const wrap=h("section",{class:"blk"},h("h3",{style:{margin:"18px 0 10px","font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px"}},"Début de cuisson aujourd'hui"));
   const grid=h("div",{class:"opengrid"}); wrap.append(grid);
-  const mid=new Date(); mid.setHours(0,0,0,0);
+  const mid=svcStart();
   CFG.restaurants.forEach(r=>{
     const cell=h("div",{class:"opencell"},h("b",{},r.name),h("span",{class:"muted"},"Prévu "+openTime(r)),h("span",{class:"st muted"},"…")); grid.append(cell);
     store.firstCook(r.id,mid.toISOString()).then(t=>{
@@ -1646,7 +1654,7 @@ function settingsView(box){
 async function reportsView(box){
   box.append(h("p",{class:"muted",style:{"margin-top":"0"}},"📁 Archive pour la compta : tous les PDF sont gardés ici pour toujours. Chaque matin à 7h30 : le journal de la veille. Chaque lundi : le rapport de la semaine (envoyé par e-mail). Chaque 1er du mois : le rapport du mois + les transferts du mois (envoyés par e-mail pour les paiements). Chaque 1er janvier : le rapport de l'année (envoyé par e-mail). Un PDF par restaurant, plus un PDF « Tous les restaurants » pour le mois et l'année."));
   if (store.mode!=="supabase"){ box.append(h("div",{class:"empty"},"Les rapports PDF sont disponibles une fois l'app reliée à la base de données.")); return; }
-  const dIn=h("input",{id:"j-date",type:"date",value:(()=>{const d=new Date();d.setDate(d.getDate()-1);return dayKey(d);})(),max:todayStr(),style:{width:"auto"}});
+  const dIn=h("input",{id:"j-date",type:"date",value:(()=>{const d=svcDate(new Date());d.setDate(d.getDate()-1);return dayKey(d);})(),max:todayStr(),style:{width:"auto"}});
   box.append(h("div",{class:"row-act",style:{"margin-bottom":"16px"}},
     h("button",{class:"btn prim",onclick:e=>sendReportNow(e,"week")},"Générer la semaine dernière"),
     h("button",{class:"btn",onclick:e=>sendReportNow(e,"monthrep")},"Générer le mois dernier"),
