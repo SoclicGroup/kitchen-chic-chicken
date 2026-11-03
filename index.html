@@ -989,13 +989,15 @@ const sideGroup = x => { const m=/^s_(acc|sau|des|bev|fut|zz)_/.exec(x.id); retu
 const TARES=[["big","Grand bac",1350],["half","Demi-bac",700],["small","Petit bac",380],["none","Sans bac",0]];
 const isTared = x => x.unit==="g" && (["s_riz","s_puree","s_acc_coleslaw","s_sau_cheddar"].includes(x.id) || /^(riz|pur[ée]e|coleslaw|sauce cheddar|cheddar)$/i.test((x.name||"").trim()));
 // pesée : poids de la balance − poids du bac = ce qui est jeté
+const isCheddar = x => x.id==="s_sau_cheddar" || /cheddar/i.test(x.name||"");
+const taresFor = x => isCheddar(x) ? [["chd","Bac cheddar",390],["none","Sans bac",0]] : TARES;
 function weighSheet(x, current, onAdd){
-  let tare="big", w="";
+  const TS=taresFor(x); let tare=TS[0][0], w="";
   const disp=h("div",{class:"w-disp"},"0 g"), res=h("div",{class:"w-res"}), addBtn=h("button",{class:"act prim"},"Ajouter");
   const tareBox=h("div",{class:"w-tares"});
-  const net=()=>{ const t=TARES.find(z=>z[0]===tare)[2]; return {t, g:(parseInt(w,10)||0), n:(parseInt(w,10)||0)-t}; };
+  const net=()=>{ const t=TS.find(z=>z[0]===tare)[2]; return {t, g:(parseInt(w,10)||0), n:(parseInt(w,10)||0)-t}; };
   const upd=()=>{ const {t,g,n}=net(); disp.textContent=(g?fmt(g):"0")+" g";
-    tareBox.innerHTML=""; TARES.forEach(([k,lab,v])=>tareBox.append(h("button",{class:"w-tare"+(k===tare?" on":""),onclick:()=>{ tare=k; upd(); }},lab,h("small",{},v?("− "+fmt(v)+" g"):"rien à enlever"))));
+    tareBox.innerHTML=""; if(TS.length===2) tareBox.style.gridTemplateColumns="repeat(2,1fr)"; TS.forEach(([k,lab,v])=>tareBox.append(h("button",{class:"w-tare"+(k===tare?" on":""),onclick:()=>{ tare=k; upd(); }},lab,h("small",{},v?("− "+fmt(v)+" g"):"rien à enlever"))));
     if(!g){ res.className="w-res"; res.textContent="Pose le bac sur la balance et tape le poids affiché"; addBtn.disabled=true; addBtn.textContent="Ajouter"; return; }
     if(n<=0){ res.className="w-res bad"; res.textContent=`${fmt(g)} g, c'est moins que le bac (${fmt(t)} g) : vérifie le poids ou le bac`; addBtn.disabled=true; addBtn.textContent="Ajouter"; return; }
     res.className="w-res good"; res.textContent=t?`${fmt(g)} g − bac ${fmt(t)} g = ${fmt(n)} g jetés`:`${fmt(n)} g jetés`;
@@ -1042,7 +1044,7 @@ function closingSheet(){
       close(); toast(L("saved"));
     };
     return [
-      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ Riz, purée, coleslaw, cheddar : appuie sur « Peser », le bac est enlevé tout seul (grand bac 1350 g · demi-bac 700 g · petit bac 380 g)"),
+      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ Riz, purée, coleslaw, cheddar : appuie sur « Peser », le bac est enlevé tout seul (grand bac 1350 g · demi-bac 700 g · petit bac 380 g · bac cheddar 390 g)"),
       already ? h("div",{class:"alert"},`${L("closing_done")} ${new Date(lastC).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"})}`) : null,
       h("div",{class:"crows"},body),
       h("div",{class:"sticky-act"}, okBtn, h("button",{class:"act ghost",onclick:close},L("back")))
