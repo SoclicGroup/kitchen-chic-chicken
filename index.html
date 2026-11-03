@@ -635,10 +635,10 @@ async function refreshSift(){
   if (!K.restoId) return;
   try{
     const last=await store.lastSift(K.restoId);
-    const since=last || new Date(Date.now()-14*86400000).toISOString();
+    const day0=svcStart().toISOString(), since=(last && last>day0) ? last : day0;
     let c=await store.cookedSince(K.restoId,since);
     // ajouter les actions pas encore envoyées
-    const pend=outbox.filter(e=>e.restaurant_id===K.restoId);
+    const pend=outbox.filter(e=>e.restaurant_id===K.restoId && e.created_at>=since);
     let iSift=-1; pend.forEach((e,i)=>{ if(e.type==="sift") iSift=i; });
     if (iSift>=0) c=0;
     pend.slice(iSift+1).forEach(e=>{ if(e.type==="cook") c+=e.pieces; else if(e.type==="cancel") c-=e.pieces; });
@@ -822,7 +822,19 @@ function startScreen(){
     h("a",{class:"chip",href:"#admin",style:{"align-self":"flex-start"}},"Ouvrir le dashboard"));
 }
 
+// à 2h du matin (début d'une nouvelle journée de service) : minuteurs arrêtés et panure remise à zéro
+function newServiceDay(){
+  const day=svcKey(new Date());
+  if (K.svcDay===day) return false;
+  const first=K.svcDay==null; K.svcDay=day;
+  let changed=false;
+  for (const [id,tm] of Object.entries(K.timers)){ if (svcKey(new Date(tm.start))!==day){ delete K.timers[id]; changed=true; } }
+  if (changed) saveTimers();
+  if (!first){ K.sift={count:0,since:svcStart().toISOString(),ready:true}; drawSift(); refreshSift(); }
+  return changed;
+}
 function tick(){
+  newServiceDay();
   const now=Date.now(), r=currentResto(); if(!r) return;
   const L=k=>tr(r.lang,k);
   document.querySelectorAll(".tile").forEach(el=>{
@@ -1019,7 +1031,8 @@ function weighSheet(x, current, onAdd){
 function closingSheet(){
   const r=currentResto(), L=k=>tr(r.lang,k);
   const sides=(CFG.sides||[]).filter(x=>x.active!==false);
-  const qty=Object.fromEntries(sides.map(x=>[x.id,0]));
+  const prods=CFG.products.filter(p=>p.active!==false || K.timers[p.id]).map(p=>({id:p.id,name:p.name,unit:"pièces",_p:p}));
+  const qty=Object.fromEntries([...prods,...sides].map(x=>[x.id,0]));
   const step = u => u==="g" ? 50 : 1;
   const okBtn=h("button",{class:"act prim"},L("confirm"));
   const refresh=()=>{ const n=Object.values(qty).filter(v=>v>0).length; okBtn.textContent=L("confirm")+(n?` (${n})`:""); };
@@ -1034,11 +1047,15 @@ function closingSheet(){
     return row.el;
   };
   const body=[];
+  if (prods.length) body.push(h("div",{class:"cgrp"},"🍗 Poulet jeté"), ...prods.map(row));
   SIDE_GROUPS.forEach(([g,label])=>{ const list=sides.filter(x=>sideGroup(x)===g); if(!list.length) return;
     body.push(h("div",{class:"cgrp"},label), ...list.map(row)); });
   const lastC=LS.get("dc_last_closing",null), already = lastC && svcKey(new Date(lastC))===svcKey(new Date());
   openSheet(close=>{
     okBtn.onclick=()=>{
+      // poulet : compté comme pièces jetées (comme le bouton Jeter) ; le minuteur en cours est arrêté
+      prods.forEach(x=>{ const n=qty[x.id]; if(!(n>0)) return;
+        if (K.timers[x.id]) endBatch(x._p,n,"other"); else logEvent(ev("discard",K.restoId,x._p,"fin de service",n,null,{reason:"other"})); });
       sides.forEach(x=>{ if(qty[x.id]>0) logEvent(ev("closing",K.restoId,x,x.unit,qty[x.id])); });
       if (Object.values(qty).some(v=>v>0)) LS.set("dc_last_closing",new Date().toISOString());
       close(); toast(L("saved"));
