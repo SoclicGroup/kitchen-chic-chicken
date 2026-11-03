@@ -987,7 +987,7 @@ function discardSheet(p){
 const SIDE_GROUPS=[["acc","🍚 Accompagnements"],["sau","🥫 Sauces & garnitures"],["des","🍮 Desserts"],["bev","🥤 Boissons périmées"],["fut","🛢 Changement de fût"],["zz","⚠️ Accidents"]];
 const sideGroup = x => { const m=/^s_(acc|sau|des|bev|fut|zz)_/.exec(x.id); return m?m[1]:(["s_frites","s_mais","s_riz","s_puree"].includes(x.id)?"acc":"zz"); };
 const TARES=[["big","Grand bac",1350],["half","Demi-bac",700],["small","Petit bac",380],["none","Sans bac",0]];
-const isTared = x => x.unit==="g" && (["s_riz","s_puree","s_acc_coleslaw"].includes(x.id) || /^(riz|pur[ée]e|coleslaw)$/i.test((x.name||"").trim()));
+const isTared = x => x.unit==="g" && (["s_riz","s_puree","s_acc_coleslaw","s_sau_cheddar"].includes(x.id) || /^(riz|pur[ée]e|coleslaw|sauce cheddar|cheddar)$/i.test((x.name||"").trim()));
 // pesée : poids de la balance − poids du bac = ce qui est jeté
 function weighSheet(x, current, onAdd){
   let tare="big", w="";
@@ -1042,7 +1042,7 @@ function closingSheet(){
       close(); toast(L("saved"));
     };
     return [
-      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ Riz, purée, coleslaw : appuie sur « Peser », le bac est enlevé tout seul (grand bac 1350 g · demi-bac 700 g · petit bac 380 g)"),
+      h("h2",{},"🌙 "+L("closing")), h("p",{class:"sub"},L("closing_q")), h("p",{class:"tare"},"⚖️ Riz, purée, coleslaw, cheddar : appuie sur « Peser », le bac est enlevé tout seul (grand bac 1350 g · demi-bac 700 g · petit bac 380 g)"),
       already ? h("div",{class:"alert"},`${L("closing_done")} ${new Date(lastC).toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit"})}`) : null,
       h("div",{class:"crows"},body),
       h("div",{class:"sticky-act"}, okBtn, h("button",{class:"act ghost",onclick:close},L("back")))
