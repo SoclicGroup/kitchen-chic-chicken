@@ -371,7 +371,9 @@ const DEFAULT_SIDES = [
   {id:"s_fut_fanta",name:"Fût Fanta",unit:"unités",cost:14,active:true},
   {id:"s_fut_sprite",name:"Fût Sprite",unit:"unités",cost:14,active:true},
   {id:"s_fut_fusetea",name:"Fût Fuze Tea",unit:"unités",cost:14,active:true},
-  {id:"s_zz_accident",name:"Plat accident (menu refait)",unit:"unités",cost:15,active:true}
+  {id:"s_zz_accident",name:"Plat accident (menu refait)",unit:"unités",cost:15,active:true},
+  {id:"s_zz_burger",name:"Chicken burger",unit:"unités",cost:8.9,active:true},
+  {id:"s_zz_wrap",name:"Chicken wrap",unit:"unités",cost:7.9,active:true}
 ];
 const DEMO_SIDE_COST = {};
 
@@ -982,7 +984,7 @@ function discardSheet(p){
   ]);
 }
 
-const SIDE_GROUPS=[["acc","🍚 Accompagnements"],["sau","🥫 Sauces & garnitures"],["des","🍮 Desserts"],["bev","🥤 Boissons périmées"],["fut","🛢 Changement de fût"],["zz","⚠️ Autre"]];
+const SIDE_GROUPS=[["acc","🍚 Accompagnements"],["sau","🥫 Sauces & garnitures"],["des","🍮 Desserts"],["bev","🥤 Boissons périmées"],["fut","🛢 Changement de fût"],["zz","⚠️ Accidents"]];
 const sideGroup = x => { const m=/^s_(acc|sau|des|bev|fut|zz)_/.exec(x.id); return m?m[1]:(["s_frites","s_mais","s_riz","s_puree"].includes(x.id)?"acc":"zz"); };
 const TARES=[["big","Grand bac",1350],["half","Demi-bac",700],["small","Petit bac",380],["none","Sans bac",0]];
 const isTared = x => x.unit==="g" && (["s_riz","s_puree","s_acc_coleslaw"].includes(x.id) || /^(riz|pur[ée]e|coleslaw)$/i.test((x.name||"").trim()));
