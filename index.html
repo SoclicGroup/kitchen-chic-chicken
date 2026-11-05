@@ -254,6 +254,8 @@ input.pinbox{text-align:center;font-size:34px;letter-spacing:.35em;caret-color:t
 .w-res{text-align:center;font-weight:800;font-size:19px;color:var(--muted);padding:6px}.w-res.good{color:var(--ok)}.w-res.bad{color:var(--danger)}
 @media (max-width:480px){.w-tare{font-size:18px;min-height:70px}.w-disp{font-size:44px}}
 .opens-bar{margin:0 0 12px;padding:10px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-weight:800;font-size:18px;color:var(--accent);text-align:center}
+.banner.warn{background:color-mix(in srgb,var(--danger) 18%,var(--surface));border:1px solid var(--danger);color:var(--fg);font-weight:700}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer}
 </style>
 
 <div id="app"></div>
@@ -496,12 +498,18 @@ function LocalStore(){
     async listDevices(){ return Object.values(LS.get("dc_devices",{})); },
     async renameDevice(id,label){ const all=LS.get("dc_devices",{}); if(all[id]) all[id].label=label; LS.set("dc_devices",all); },
     async deleteDevice(id){ const all=LS.get("dc_devices",{}); delete all[id]; LS.set("dc_devices",all); },
+    async adminSettings(){ return {report_emails:(LS.get("dc_settings",{}).report_emails)||[]}; },
     async clearEvents(){ events=[]; LS.set("dc_events",events); }
   };
 }
 function SupaStore(){
   const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
   const chk = r => { if (r.error) throw r.error; return r.data; };
+  // sécurité : les modifications passent par des fonctions qui vérifient le code du gérant
+  const pinOk = ok => { if (!ok) throw new Error("Code refusé : reconnecte-toi au dashboard"); };
+  const fn = async body => {
+    const r=await fetch(CONFIG.SUPABASE_URL+"/functions/v1/weekly-report",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+CONFIG.SUPABASE_ANON_KEY,apikey:CONFIG.SUPABASE_ANON_KEY},body:JSON.stringify({mode:"manual",pin:A.pin,...body})});
+    const j=await r.json().catch(()=>({})); if (!r.ok) throw new Error(j.error||"échec"); return j; };
   return {
     mode:"supabase",
     async loadConfig(){
@@ -518,16 +526,14 @@ function SupaStore(){
     },
     async saveProducts(list){
       const rows=list.map((p,i)=>({id:p.id,name:p.name,color:p.color,minutes:p.minutes,cost:Number(p.cost)||0,quantities:p.quantities,active:p.active!==false,sort:i}));
-      chk(await sb.from("products").upsert(rows));
-      if (rows.length) chk(await sb.from("products").delete().not("id","in",`(${rows.map(r=>r.id).join(",")})`));
+      pinOk(chk(await sb.rpc("save_products",{p_pin:A.pin,p_rows:rows})));
     },
-    async saveRestaurants(list){ chk(await sb.from("restaurants").upsert(list.map(r=>{ const o={id:r.id,name:r.name,lang:r.lang}; if ("open_time" in r && HAS_OPEN) o.open_time=openTime(r); return o; }))); },
+    async saveRestaurants(list){ pinOk(chk(await sb.rpc("save_restaurants",{p_pin:A.pin,p_rows:list.map(r=>({id:r.id,name:r.name,lang:r.lang||"fr"}))}))); },
     async saveSides(list){
       const rows=list.map((x,i)=>({id:x.id,name:x.name,unit:x.unit,cost:Number(x.cost)||0,active:x.active!==false,sort:i}));
-      if (rows.length) chk(await sb.from("sides").upsert(rows));
-      const del = rows.length ? sb.from("sides").delete().not("id","in",`(${rows.map(r=>r.id).join(",")})`) : sb.from("sides").delete().neq("id","");
-      chk(await del);
+      pinOk(chk(await sb.rpc("save_sides",{p_pin:A.pin,p_rows:rows})));
     },
+    async adminSettings(){ return chk(await sb.rpc("get_admin_settings",{p_pin:A.pin})); },
     async saveSettings(s){ const ok=chk(await sb.rpc("save_settings",{p_pin:A.pin,p_values:s})); if(!ok) throw new Error("PIN refusé, reconnecte-toi au dashboard"); },
     async checkPin(pin){ return !!chk(await sb.rpc("check_pin",{p_pin:pin})); },
     async addTransfer(t){ chk(await sb.rpc("add_transfer",{p_pin:A.pin,p_from:t.from,p_to:t.to,p_item_id:t.item_id,p_item_name:t.item_name,p_unit:t.unit,p_qty:t.qty,p_unit_cost:t.unit_cost,p_note:t.note})); },
@@ -558,15 +564,20 @@ function SupaStore(){
       return chk(await q);
     },
     async listReports(){
-      // archive comptable : tout est gardé pour toujours, on liste tous les dossiers (par pages de 100)
-      const out=[];
-      for (const top of ["mois","annees","semaines","journaux"]){
-        let dirs=[];
-        for (let off=0;;off+=100){ const d=chk(await sb.storage.from("reports").list(top,{limit:100,offset:off,sortBy:{column:"name",order:"desc"}})); dirs=dirs.concat(d.filter(x=>!x.id)); if(d.length<100) break; }
-        const lists=await Promise.all(dirs.map(d=>sb.storage.from("reports").list(`${top}/${d.name}`,{limit:100,sortBy:{column:"name",order:"asc"}}).then(chk)));
-        dirs.forEach((d,i)=>out.push({kind:top==="mois"?"month":top==="annees"?"year":top==="journaux"?"day":"week",folder:d.name,files:lists[i].filter(f=>f.id).map(f=>({name:f.name,path:`${top}/${d.name}/${f.name}`}))}));
+      // archive comptable (gardée pour toujours) : la liste n'est donnée qu'avec le code du gérant
+      let rows=[];
+      for (let i=0;;i+=1000){ const d=chk(await sb.rpc("list_report_files",{p_pin:A.pin}).range(i,i+999)); rows=rows.concat(d); if (d.length<1000) break; }
+      const TOPS=["mois","annees","semaines","journaux"], KIND={mois:"month",annees:"year",journaux:"day",semaines:"week"}, groups=new Map();
+      for (const {name} of rows){
+        const [top,folder,file]=String(name).split("/");
+        if (!file || !TOPS.includes(top)) continue;
+        const key=top+"/"+folder;
+        if (!groups.has(key)) groups.set(key,{top,kind:KIND[top],folder,files:[]});
+        groups.get(key).files.push({name:file,path:name});
       }
-      return out;
+      return [...groups.values()]
+        .sort((a,b)=>TOPS.indexOf(a.top)-TOPS.indexOf(b.top) || (a.folder<b.folder?1:a.folder>b.folder?-1:0))
+        .map(g=>({kind:g.kind,folder:g.folder,files:g.files.sort((x,y)=>x.name<y.name?-1:1)}));
     },
     async heartbeat(d){ chk(await sb.from("devices").upsert(d)); },
     async firstCook(resto,since){ const d=chk(await sb.from("events").select("created_at").eq("restaurant_id",resto).eq("type","cook").gte("created_at",since).order("created_at",{ascending:true}).limit(1)); return d[0]?d[0].created_at:null; },
@@ -582,8 +593,8 @@ function SupaStore(){
     },
     async listDevices(){ return chk(await sb.from("devices").select("*").order("restaurant_id")); },
     async renameDevice(id,label){ chk(await sb.from("devices").update({label}).eq("id",id)); },
-    async deleteDevice(id){ chk(await sb.from("devices").delete().eq("id",id)); },
-    async reportUrl(path){ return chk(await sb.storage.from("reports").createSignedUrl(path,3600)).signedUrl; }
+    async deleteDevice(id){ pinOk(chk(await sb.rpc("delete_device",{p_pin:A.pin,p_id:id}))); },
+    async reportUrl(path){ return (await fn({kind:"report_url",path})).url; }
   };
 }
 
@@ -1135,6 +1146,8 @@ function renderAdmin(){
       h("a",{class:"chip",href:"#cuisine"},"Écran cuisine")));
   if (store.mode==="demo") wrap.append(h("div",{class:"banner"},"Mode démo : données d'exemple, enregistrées seulement sur cet appareil. Une fois Supabase branché, les 4 restaurants et toutes les tablettes partagent les mêmes données."));
   if (!A.unlocked){ wrap.append(pinScreen()); app.append(wrap); return; }
+  if (store.mode==="supabase" && String(A.pin||"").length<6) wrap.append(h("div",{class:"banner warn"},"🔒 Ton code gérant est trop court et facile à deviner. Va dans ",
+    h("button",{class:"linkbtn",onclick:()=>{A.tab="settings";renderAdmin();}},"⚙️ Réglages")," et choisis un nouveau code de 6 à 8 chiffres."));
   wrap.append(h("div",{class:"tabs",role:"tablist"},
     [["stats","📊 Résumé"],["transfers","🔄 Transferts"],["reports","📄 Rapports PDF"],["timers","⏱ Minuteurs"],["settings","⚙️ Réglages"]].map(([k,l])=>
       h("button",{class:"chip"+(A.tab===k?" on":""),role:"tab","aria-selected":String(A.tab===k),onclick:()=>{A.tab=k;renderAdmin();}},l))));
@@ -1149,7 +1162,7 @@ function renderAdmin(){
 function pinScreen(){
   const inp=h("input",{id:"pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"••••"});
   const go=async()=>{ let ok=false; try{ ok=await store.checkPin(inp.value); }catch(e){ toast("Connexion impossible"); return; }
-    if (ok){ A.unlocked=true; A.pin=inp.value; renderAdmin(); } else { toast("Code incorrect"); inp.value=""; } };
+    if (ok){ A.unlocked=true; A.pin=inp.value; A.adm=null; try{ A.adm=await store.adminSettings(); }catch(e){} renderAdmin(); } else { toast("Code incorrect"); inp.value=""; } };
   inp.addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
   return h("div",{class:"pin"},
     h("h2",{},"Accès gérant"),
@@ -1626,7 +1639,7 @@ function timersView(box){
 
 /* ----- Restaurants & réglages ----- */
 function settingsView(box){
-  const rd=JSON.parse(JSON.stringify(CFG.restaurants)), sd={...CFG.settings};
+  const rd=JSON.parse(JSON.stringify(CFG.restaurants)), sd={...CFG.settings, report_emails:(A.adm&&A.adm.report_emails)||CFG.settings.report_emails||[]};
   box.append(h("h3",{style:{"font-family":"var(--f-display)","text-transform":"uppercase","font-size":"22px",margin:"0 0 10px"}},"Restaurants"),
     h("div",{class:"cards"}, rd.map((r,i)=>h("div",{class:"card"},
       h("label",{class:"f",for:"rn"+i},"Nom",h("input",{id:"rn"+i,value:r.name,oninput:e=>r.name=e.target.value})),
@@ -1664,9 +1677,10 @@ function settingsView(box){
         store.mode==="supabase" ? h("button",{class:"btn",style:{"align-self":"flex-start"},onclick:e=>sendReportNow(e,"week")},"Envoyer le rapport de la semaine maintenant") : null)),
     h("div",{class:"row-act"},
       h("button",{class:"btn prim",onclick:async()=>{
-        if (!/^\d{4,8}$/.test(sd.pin)){ toast("Le PIN doit faire 4 à 8 chiffres"); return; }
+        if (sd.pin!==A.pin && !/^\d{6,8}$/.test(sd.pin)){ toast("Le nouveau code doit faire 6 à 8 chiffres"); return; }
+        if (sd.pin!==A.pin && /^(\d)\1+$|^(012345|123456|1234567|12345678|654321|098765)$/.test(sd.pin)){ toast("Code trop facile : choisis un code moins évident"); return; }
         const bad=(sd.report_emails||[]).find(m=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(m)); if (bad){ toast("Adresse e-mail invalide : "+bad); return; }
-        try{ await store.saveRestaurants(rd); await store.saveSettings({pin:sd.pin,volume:sd.volume,report_emails:sd.report_emails||[],sift_every:Number(sd.sift_every)||0}); A.pin=sd.pin; const {pin:_p,...pub}=sd; CFG.restaurants=rd; CFG.settings=pub; LS.set("dc_cfg",CFG); toast("Réglages enregistrés"); }
+        try{ await store.saveRestaurants(rd); await store.saveSettings({pin:sd.pin,volume:sd.volume,report_emails:sd.report_emails||[],sift_every:Number(sd.sift_every)||0}); A.pin=sd.pin; const {pin:_p,report_emails:_m,...pub}=sd; A.adm={...(A.adm||{}),report_emails:sd.report_emails||[]}; CFG.restaurants=rd; CFG.settings={...CFG.settings,...pub}; LS.set("dc_cfg",CFG); toast("Réglages enregistrés"); }
         catch(e){ toast("Échec de l'enregistrement : "+(e.message||e)); }
       }},"Enregistrer"),
       store.mode==="demo" ? h("button",{class:"btn dang",onclick:async()=>{ await store.clearEvents(); toast("Données d'exemple effacées"); }},"Effacer les données d'exemple") : null));
@@ -1724,7 +1738,7 @@ async function sendReportNow(e,kind,date){
 /* ---------- Démarrage ---------- */
 function route(){
   stopKitchen(); document.querySelectorAll(".ov").forEach(o=>o.remove());
-  if (location.hash==="#admin") renderAdmin(); else { A.unlocked=false; A.pin=null; renderKitchen(); }
+  if (location.hash==="#admin") renderAdmin(); else { A.unlocked=false; A.pin=null; A.adm=null; renderKitchen(); }
 }
 window.addEventListener("hashchange", route);
 (async function init(){
